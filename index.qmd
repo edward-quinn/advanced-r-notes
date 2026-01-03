@@ -1,0 +1,6 @@
+---
+title: my advanced R notes website
+author: edward quinn
+---
+
+# Advanced R Book Notes
