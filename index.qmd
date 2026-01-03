@@ -4,3 +4,5 @@ author: edward quinn
 ---
 
 # Advanced R Book Notes
+
+- [Chapter 1 Notes](chapter_01_notes.qmd)
