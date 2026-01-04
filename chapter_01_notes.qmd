@@ -1,7 +1,11 @@
 ---
-title: Chapter 1 Notes
+title: Advanced R - Chapter 1 Notes
+format:
+    html:
+        toc: true
 ---
 
+# Heading 1
 
 ```{r}
 
@@ -15,6 +19,7 @@ library(tidyverse)
 
 ```
 
+## Heading 2
 
 ```{r}
 
@@ -22,3 +27,5 @@ ggplot(diamonds, aes(x = carat, y  = price)) +
     geom_point()
 
 ```
+
+# Heading 3

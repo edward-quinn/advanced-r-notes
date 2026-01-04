@@ -1,8 +1,9 @@
 ---
-title: my advanced R notes website
-author: edward quinn
+title: Advanced R Notebook
+author: Edward B. Quinn, PhD, MPH
+bibliography: professional_development.bib
 ---
 
-# Advanced R Book Notes
+# @wickham_advanced_2019 Book Notes
 
-- [Chapter 1 Notes](chapter_01_notes.qmd)
+- [Chapter 1 Notes](chapter_01_notes.qmd){.external target="_blank"}
