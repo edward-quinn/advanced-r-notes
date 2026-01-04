@@ -2,22 +2,22 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "my advanced R notes website",
+    "title": "Advanced R Notebook",
     "section": "",
-    "text": "Advanced R Book Notes\n\nChapter 1 Notes"
-  },
-  {
-    "objectID": "about.html",
-    "href": "about.html",
-    "title": "About page I probably don’t need",
-    "section": "",
-    "text": "Some stuff\ndkdkdkd"
+    "text": "Wickham (2019) Book Notes\n\nChapter 1 Notes\n\n\n\n\n\n\nReferences\n\nWickham, Hadley. 2019. Advanced R. 2nd Edition. New York: Chapman; Hall/CRC."
   },
   {
     "objectID": "chapter_01_notes.html",
     "href": "chapter_01_notes.html",
-    "title": "Chapter 1 Notes",
+    "title": "Advanced R - Chapter 1 Notes",
     "section": "",
-    "text": "1+1\n\n[1] 2\n\n\n\nlibrary(tidyverse)\n\n── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──\n✔ dplyr     1.1.4     ✔ readr     2.1.6\n✔ forcats   1.0.1     ✔ stringr   1.6.0\n✔ ggplot2   4.0.1     ✔ tibble    3.3.0\n✔ lubridate 1.9.4     ✔ tidyr     1.3.2\n✔ purrr     1.2.0     \n── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n✖ dplyr::filter() masks stats::filter()\n✖ dplyr::lag()    masks stats::lag()\nℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors\n\n\n\nggplot(diamonds, aes(x = carat, y  = price)) +\n    geom_point()"
+    "text": "1+1\n\n[1] 2\n\n\n\nlibrary(tidyverse)\n\n── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──\n✔ dplyr     1.1.4     ✔ readr     2.1.6\n✔ forcats   1.0.1     ✔ stringr   1.6.0\n✔ ggplot2   4.0.1     ✔ tibble    3.3.0\n✔ lubridate 1.9.4     ✔ tidyr     1.3.2\n✔ purrr     1.2.0     \n── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n✖ dplyr::filter() masks stats::filter()\n✖ dplyr::lag()    masks stats::lag()\nℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors\n\n\n\n\n\nggplot(diamonds, aes(x = carat, y  = price)) +\n    geom_point()"
+  },
+  {
+    "objectID": "chapter_01_notes.html#heading-2",
+    "href": "chapter_01_notes.html#heading-2",
+    "title": "Advanced R - Chapter 1 Notes",
+    "section": "",
+    "text": "ggplot(diamonds, aes(x = carat, y  = price)) +\n    geom_point()"
   }
 ]
