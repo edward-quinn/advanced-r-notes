@@ -9,3 +9,4 @@ bibliography: professional_development.bib
 Wickham's book can be found [here](https://adv-r.hadley.nz/){.external target="_blank"}
 
 - [Chapter 1 Notes](chapter_01_notes.qmd){.external target="_blank"}
+- [Chapter 2 Notes](chapter_02_notes.qmd){.external target="_blank"}
