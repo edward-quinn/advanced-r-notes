@@ -5,27 +5,19 @@ format:
         toc: true
 ---
 
-# Heading 1
+# R Pros and Cons
+-   Pros
+      - free, latest statistical techniques, purpose-built packages, community support
+-   Cons
+      - slow, inconsistency in packages, focus on results instead of software engineering processes
 
-```{r}
 
-1+1
-```
+# What You Will Learn
+-   Understand data types, functions, environments and how to use the condition system
+-   Understand what functional programming means
+-   Know about object-oriented systems in R 
+-   Understand metaprogramming
+-   Understand what slows R down or uses a lot of memory
 
 
-```{r}
 
-library(tidyverse)
-
-```
-
-## Heading 2
-
-```{r}
-
-ggplot(diamonds, aes(x = carat, y  = price)) +
-    geom_point()
-
-```
-
-# Heading 3

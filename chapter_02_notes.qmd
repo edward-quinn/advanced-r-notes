@@ -1,0 +1,177 @@
+---
+title: Advanced R - Chapter 2 Notes
+format:
+    html:
+        toc: true
+---
+
+# 2 Names and Values
+-   The distinction here allows prediction of when R will copy and object, with implications for performance and memory usage.
+
+
+```{r}
+
+library(lobstr)
+
+```
+
+## 2.2 Binding Basics
+
+The assignment operator `<-` creates a reference between names and objects.
+
+```{r}
+# Assigns a name to a value
+x <- c(1, 2, 3)
+
+```
+
+We have created an object and given it a name `x`.
+
+```{r}
+
+# Assigns another name to the same value. Does not create a new value.
+y <- x
+
+```
+
+```{r}
+
+obj_addr(x)
+
+obj_addr(y)
+
+identical(obj_addr(x), obj_addr(y))
+
+```
+
+```{r}
+
+a <- 1:10
+b <- a
+c <- b
+d <- 1:10
+
+```
+
+`a` is name of the value or object `1:10`. So are `b` and `c`. `d` is a name of an object different from the object with names `a`, `b`, and `c`.
+
+
+
+## 2.3 Copy-on-modify
+
+When does R make a copy?
+
+```{r}
+
+x <- c(1, 2, 3)
+y <- x
+
+y[[3]] <- 4
+x
+#> [1] 1 2 3
+
+```
+
+Generally, R objects are immutable. So `x` wasn't changed when `y` was modified. A new object was created and bound to `y`. This is what is meant by **copy-on-modify**.
+
+`tracemem()` tells you when an object is copied.
+
+```{r}
+
+x <- c(1, 2, 3)
+cat(tracemem(x), "\n")
+#> <0x7f80c0e0ffc8> 
+
+```
+
+```{r}
+
+y <- x
+y[[3]] <- 4L
+
+```
+
+Modifying `y` again does not produce a copy. The object is modified in place.
+
+```{r}
+y[[3]] <- 5L
+
+untracemem(x)
+```
+
+Function calls follow the same copying rules.
+
+```{r}
+f <- function(a) {
+  a
+}
+
+x <- c(1, 2, 3)
+cat(tracemem(x), "\n")
+#> <0x557146b84928>
+
+z <- f(x)
+# there's no copy here!
+
+untracemem(x)
+
+```
+
+When the function `f()` is run, the argument `a` becomes a binding to the object already bound to `x`. The name `z` now points to the same object as `x`. The object is never copied because it is never modified.
+
+Here is a list:
+
+```{r}
+
+l1 <- list(1, 2, 3)
+
+```
+
+The list stores references to values. It does not store objects; it stores the names of objects.
+
+```{r}
+
+l2 <- l1
+
+```
+
+Modifying a list creates a **shallow** copy. The list and its names are copied, but not the object the names point to.
+
+```{r}
+
+l2[[3]] <- 4
+
+```
+
+You can see values shared across lists like so:
+
+```{r}
+
+lobstr::ref(l1, l2)
+
+```
+
+
+Data frames are lists of vectors.
+
+
+
+
+
+
+
+## 2.4 Object size
+
+How much memory does an object occupy?
+
+## 2.5 Modify-in-place
+
+There are exceptions to copy-on-modify: single-named environments and objects.
+
+
+## 2.6 Unbinding and the garbage collector
+
+The garbage collector frees memory from objects without a referenced name.
+
+
+
