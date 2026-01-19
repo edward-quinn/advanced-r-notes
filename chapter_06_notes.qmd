@@ -1,0 +1,15 @@
+---
+title: Advanced R - Chapter 6 Notes
+format:
+  html:
+      toc: true
+---
+
+# 6 Functions
+
+
+```{r}
+
+
+
+```

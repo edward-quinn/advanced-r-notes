@@ -12,3 +12,5 @@ Wickham's book can be found [here](https://adv-r.hadley.nz/){.external target="_
 - [Chapter 2 Notes](chapter_02_notes.qmd){.external target="_blank"}
 - [Chapter 3 Notes](chapter_03_notes.qmd){.external target="_blank"}
 - [Chapter 4 Notes](chapter_04_notes.qmd){.external target="_blank"}
+- [Chapter 5 Notes](chapter_05_notes.qmd){.external target="_blank"}
+- [Chapter 6 Notes](chapter_06_notes.qmd){.external target="_blank"}
