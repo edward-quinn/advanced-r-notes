@@ -1,8 +1,8 @@
 ---
 title: Advanced R - Chapter 2 Notes
 format:
-    html:
-        toc: true
+  html:
+      toc: true
 ---
 
 # 2 Names and Values
@@ -29,7 +29,7 @@ We have created an object and given it a name `x`.
 
 ```{r}
 
-# Assigns another name to the same value. Does not create a new value.
+# Assigns another name to the same object/value. Does not create a new value.
 y <- x
 
 ```
@@ -154,15 +154,101 @@ lobstr::ref(l1, l2)
 
 Data frames are lists of vectors.
 
+```{r}
+
+d1 <- data.frame(x = c(1, 5, 6), y = c(2, 4, 3))
+
+d2 <- d1
+d2[, 2] <- d2[, 2] * 2
+
+```
+
+In this example, the object that is the first column is pointed to by both d1 and d2. Modifying a row means every column is modified, so each column must be "copied" (and then edited?).
+
+```{r}
+
+d3 <- d1
+d3[1, ] <- d3[1, ] * 3
+
+```
+
+R also uses references with character vectors (vectors of strings), which point to a global string pool.
+
+```{r}
+
+x <- c("a", "a", "abc", "d")
+ref(x, character = TRUE)
 
 
+```
 
+Both of the first two names point to the same object.
 
+### 2.3.6 Exercises
 
+```{r}
+
+x <- c(1L, 2L, 3L)
+tracemem(x)
+
+x[[3]] <- 4
+
+```
+
+```{r}
+
+a <- 1:10
+b <- list(a, a)
+c <- list(b, a, 1:10)
+
+lobstr::ref(b,c)
+
+```
 
 ## 2.4 Object size
 
-How much memory does an object occupy?
+How much memory does an object occupy? Use `lobstr::ojb_size`.
+
+```{r}
+
+obj_size(letters)
+
+obj_size(ggplot2::diamonds)
+```
+
+
+Lists are generally small since they are only references to values, not the values themselves.
+
+```{r}
+
+x <- runif(1e6)
+obj_size(x)
+#> 8.00 MB
+
+y <- list(x, x, x)
+obj_size(y)
+#> 8.00 MB
+
+```
+
+Thanks to the global string pool, character vectors take up less memory than you might expect. Also, the size of two objects combined is much easier to figure out if there are no shared values.
+
+```{r}
+
+banana <- "bananas bananas bananas"
+obj_size(banana)
+#> 136 B
+obj_size(rep(banana, 100))
+#> 928 B
+
+```
+
+```{r}
+
+
+
+
+```
 
 ## 2.5 Modify-in-place
 
