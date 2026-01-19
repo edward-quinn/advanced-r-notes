@@ -2,26 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://edward-quinn.github.io/advanced-r-notes/index.html</loc>
-    <lastmod>2026-01-19T16:41:18.315Z</lastmod>
+    <lastmod>2026-01-19T21:33:26.240Z</lastmod>
   </url>
   <url>
-    <loc>https://edward-quinn.github.io/advanced-r-notes/chapter_04_notes.html</loc>
-    <lastmod>2026-01-19T20:47:24.563Z</lastmod>
-  </url>
-  <url>
-    <loc>https://edward-quinn.github.io/advanced-r-notes/chapter_02_notes.html</loc>
-    <lastmod>2026-01-19T12:48:02.187Z</lastmod>
-  </url>
-  <url>
-    <loc>https://edward-quinn.github.io/advanced-r-notes/chapter_01_notes.html</loc>
-    <lastmod>2026-01-04T22:41:11.106Z</lastmod>
+    <loc>https://edward-quinn.github.io/advanced-r-notes/chapter_05_notes.html</loc>
+    <lastmod>2026-01-19T21:33:30.826Z</lastmod>
   </url>
   <url>
     <loc>https://edward-quinn.github.io/advanced-r-notes/chapter_03_notes.html</loc>
     <lastmod>2026-01-19T16:50:45.304Z</lastmod>
   </url>
   <url>
-    <loc>https://edward-quinn.github.io/advanced-r-notes/chapter_05_notes.html</loc>
-    <lastmod>2026-01-19T20:47:17.839Z</lastmod>
+    <loc>https://edward-quinn.github.io/advanced-r-notes/chapter_01_notes.html</loc>
+    <lastmod>2026-01-04T22:41:11.106Z</lastmod>
+  </url>
+  <url>
+    <loc>https://edward-quinn.github.io/advanced-r-notes/chapter_02_notes.html</loc>
+    <lastmod>2026-01-19T12:48:02.187Z</lastmod>
+  </url>
+  <url>
+    <loc>https://edward-quinn.github.io/advanced-r-notes/chapter_04_notes.html</loc>
+    <lastmod>2026-01-19T20:47:24.563Z</lastmod>
+  </url>
+  <url>
+    <loc>https://edward-quinn.github.io/advanced-r-notes/chapter_06_notes.html</loc>
+    <lastmod>2026-01-19T21:33:13.481Z</lastmod>
   </url>
 </urlset>
