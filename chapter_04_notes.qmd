@@ -6,5 +6,641 @@ format:
 ---
 
 # 4 Subsetting
--   
--   
+-   Six ways to subset atomic vectors
+-   Three subsetting operators
+-   Subsetting operators interact differently with different vector types (e.g., atomic vectors, lists, factors, matrices, and data frames).
+-   Subsetting can be combined with assignment.
+
+## 4.2 Selecting multiple elements
+
+Section 4.2 starts by teaching you about `[`. You’ll learn the six ways to subset atomic vectors. You’ll then learn how those six ways act when used to subset lists, matrices, and data frames.
+
+```{r}
+
+x <- c(2.1, 4.2, 3.3, 5.4)
+
+```
+
+Subset with positive integers
+
+```{r}
+x[c(3, 1)]
+#> [1] 3.3 2.1
+x[order(x)]
+#> [1] 2.1 3.3 4.2 5.4
+
+# Duplicate indices will duplicate values
+x[c(1, 1)]
+#> [1] 2.1 2.1
+
+# Real numbers are silently truncated to integers - 
+# rounding down and then giving the second integer
+x[c(2.1, 2.9)]
+#> [1] 4.2 4.2
+```
+
+Negative integers exclude elements at specific positions
+
+```{r}
+
+x[-c(3, 1)]
+#> [1] 4.2 5.4
+
+# removes elements 3 and 1
+
+```
+
+You cannot mix positive and negative integers in a single subset.
+
+Logical vectors subset where the condition is met
+
+```{r}
+
+x[c(TRUE, TRUE, FALSE, FALSE)]
+#> [1] 2.1 4.2
+x[x > 3]
+#> [1] 4.2 3.3 5.4
+
+```
+
+Nothing returns the original vector.
+
+```{r}
+
+x[]
+#> [1] 2.1 4.2 3.3 5.4
+
+```
+
+Named vectors can be subset with character vectors that match the names.
+
+```{r}
+
+(y <- setNames(x, letters[1:4]))
+#>   a   b   c   d 
+#> 2.1 4.2 3.3 5.4
+y[c("d", "c", "a")]
+#>   d   c   a 
+#> 5.4 3.3 2.1
+
+# Like integer indices, you can repeat indices
+y[c("a", "a", "a")]
+#>   a   a   a 
+#> 2.1 2.1 2.1
+
+# When subsetting with [, names are always matched exactly
+z <- c(abc = 1, def = 2)
+z[c("a", "d")]
+#> <NA> <NA> 
+#>   NA   NA
+
+```
+
+Avoid subsetting with factors, as they use the underlying integer vector, not the character levels.
+
+```{r}
+
+y[factor("b")]
+#>   a 
+#> 2.1
+
+# Here the `factor(b)` call is return an integer of value 1, so it's returning the first element in the vector being subset, not the element with a name equivalent to "b".
+
+```
+
+
+**Lists**  - Using `[` always returns a list; `[[` and `$` let you pull out elements of a list.
+
+```{r}
+
+
+
+```
+
+**Matrices and arrays**
+
+Subset higher dimensional structures in three ways
+1. multiple vectors
+2. single vector
+3. a matrix
+
+blank subsetting retains all rows or columns.
+
+```{r}
+
+a <- matrix(1:9, nrow = 3)
+colnames(a) <- c("A", "B", "C")
+a[1:2, ]
+#>      A B C
+#> [1,] 1 4 7
+#> [2,] 2 5 8
+a[c(TRUE, FALSE, TRUE), c("B", "A")]
+#>      B A
+#> [1,] 4 1
+#> [2,] 6 3
+a[0, -2]
+#>      A C
+
+```
+
+By default, `[` simplifies to the lowest possible dimensionality.
+
+```{r}
+
+a[1, ]
+#> A B C 
+#> 1 4 7
+a[1, 1]
+#> A 
+#> 1
+
+```
+
+matrices are just vectors with special attributes, and so can be subset with a single vector
+
+```{r}
+
+vals <- outer(1:5, 1:5, FUN = "paste", sep = ",")
+vals
+#>      [,1]  [,2]  [,3]  [,4]  [,5] 
+#> [1,] "1,1" "1,2" "1,3" "1,4" "1,5"
+#> [2,] "2,1" "2,2" "2,3" "2,4" "2,5"
+#> [3,] "3,1" "3,2" "3,3" "3,4" "3,5"
+#> [4,] "4,1" "4,2" "4,3" "4,4" "4,5"
+#> [5,] "5,1" "5,2" "5,3" "5,4" "5,5"
+
+vals[c(4, 15)]
+#> [1] "4,1" "5,3"
+
+```
+
+You can also subset higher dimensional structures with an integer matrix
+
+```{r}
+
+select <- matrix(ncol = 2, byrow = TRUE, c(
+  1, 1,
+  3, 1,
+  2, 4
+))
+vals[select]
+#> [1] "1,1" "3,1" "2,4"
+
+```
+
+**Data frames and tibbles**
+
+Subsetting with one index indexes the columns; with two you are indexing rows and then columns.
+
+```{r}
+
+df <- data.frame(x = 1:3, y = 3:1, z = letters[1:3])
+
+df[df$x == 2, ]
+#>   x y z
+#> 2 2 2 b
+df[c(1, 3), ]
+#>   x y z
+#> 1 1 3 a
+#> 3 3 1 c
+
+# There are two ways to select columns from a data frame
+# Like a list
+df[c("x", "z")]
+#>   x z
+#> 1 1 a
+#> 2 2 b
+#> 3 3 c
+# Like a matrix
+df[, c("x", "z")]
+#>   x z
+#> 1 1 a
+#> 2 2 b
+#> 3 3 c
+
+# There's an important difference if you select a single 
+# column: matrix subsetting simplifies by default, list 
+# subsetting does not.
+str(df["x"])
+#> 'data.frame':    3 obs. of  1 variable:
+#>  $ x: int  1 2 3
+str(df[, "x"])
+#>  int [1:3] 1 2 3
+
+```
+
+Subsetting a tibble with `[` always returns a tibble.
+
+```{r}
+
+df <- tibble::tibble(x = 1:3, y = 3:1, z = letters[1:3])
+
+str(df["x"])
+#> tibble [3 × 1] (S3: tbl_df/tbl/data.frame)
+#>  $ x: int [1:3] 1 2 3
+str(df[, "x"])
+#> tibble [3 × 1] (S3: tbl_df/tbl/data.frame)
+#>  $ x: int [1:3] 1 2 3
+
+
+```
+
+You can use the `drop` argument when subsetting to preserve dimensionality
+
+```{r}
+
+a <- matrix(1:4, nrow = 2)
+str(a[1, ])
+#>  int [1:2] 1 3
+
+str(a[1, , drop = FALSE])
+#>  int [1, 1:2] 1 3
+
+
+
+```
+
+Preserving dimensionality for data frames
+
+```{r}
+
+df <- data.frame(a = 1:2, b = 1:2)
+str(df[, "a"])
+#>  int [1:2] 1 2
+
+str(df[, "a", drop = FALSE])
+#> 'data.frame':    2 obs. of  1 variable:
+#>  $ a: int  1 2
+
+```
+
+Tibbles default to `drop = FALSE`.
+
+Factors also have `drop = FALSE` as a default.
+
+```{r}
+
+z <- factor(c("a", "b"))
+z[1]
+#> [1] a
+#> Levels: a b
+z[1, drop = TRUE]
+#> [1] a
+#> Levels: a
+
+```
+
+## 4.2.6 Exercises
+
+```{r}
+
+mtcars[mtcars$cyl == 4, ]
+mtcars[-c(1:4), ]
+mtcars[mtcars$cyl <= 5,]
+mtcars[mtcars$cyl == 4 | mtcars$cyl == 6, ]
+
+```
+
+## 4.3 Selecting a single element
+
+Section 4.3 expands your knowledge of subsetting operators to include `[[` and `$` and focuses on the important principles of simplifying versus preserving.
+
+`[[` is for extracting single items, while `x$y` is useful shorthand for `x[["y"]]`.
+
+Note that `[` on a list always returns a list. Using `[[` to return an item within a list. Note that `[[` cannot be used with more than two items, unless you are subsetting within a single item within a list. This is best avoided in favor of `purrr:pluck()`.
+
+```{r}
+
+x <- list(1:3, "a", 4:6)
+
+```
+
+Note the main difference between `$` and `[[` is that `$` does partial matching.
+
+```{r}
+
+x <- list(abc = 1)
+x$a
+#> [1] 1
+x[["a"]]
+#> NULL
+
+```
+
+**Missing and out-of-bounds** indices. These are well handled by `pluck` and `chuck` from `purrr`.
+
+```{r}
+
+x <- list(
+  a = list(1, 2, 3),
+  b = list(3, 4, 5)
+)
+
+purrr::pluck(x, "a", 1)
+#> [1] 1
+
+purrr::pluck(x, "c", 1)
+#> NULL
+
+purrr::pluck(x, "c", 1, .default = NA)
+#> [1] NA
+
+```
+
+
+## 4.4 Subsetting and assignment
+
+In Section 4.4 you’ll learn the art of subassignment, which combines subsetting and assignment to modify parts of an object.
+
+```{r}
+
+x <- 1:5
+x[c(1, 2)] <- c(101, 102)
+x
+#> [1] 101 102   3   4   5
+
+```
+
+You can use `NULL` to remove a component from a list or set the value to `NULL`.
+
+```{r}
+x <- list(a = 1, b = 2)
+x[["b"]] <- NULL
+str(x)
+#> List of 1
+#>  $ a: num 1
+
+y <- list(a = 1, b = 2)
+y["b"] <- list(NULL)
+str(y)
+#> List of 2
+#>  $ a: num 1
+#>  $ b: NULL
+
+
+```
+
+Changing contents vs changing bound objects
+
+```{r}
+
+# mtcars[] <- lapply(mtcars, as.integer)
+# is.data.frame(mtcars)
+# #> [1] TRUE
+
+# mtcars <- lapply(mtcars, as.integer)
+# is.data.frame(mtcars)
+#> [1] FALSE
+
+```
+
+
+## 4.5 Applications
+
+Section 4.5 leads you through eight important, but not obvious, applications of subsetting to solve problems that you often encounter in data analysis.
+
+### 4.5.1 Lookup tables (character subsetting)
+
+Convert abbreviations
+
+```{r}
+
+x <- c("m", "f", "u", "f", "f", "m", "m")
+lookup <- c(m = "Male", f = "Female", u = NA)
+lookup[x]
+#>        m        f        u        f        f        m        m 
+#>   "Male" "Female"       NA "Female" "Female"   "Male"   "Male"
+
+unname(lookup[x])
+
+```
+
+### 4.5.2 Matching and merging by hand (integer subsetting)
+
+```{r}
+
+grades <- c(1, 2, 2, 3, 1)
+
+info <- data.frame(
+  grade = 3:1,
+  desc = c("Excellent", "Good", "Poor"),
+  fail = c(F, F, T)
+)
+
+id <- match(grades, info$grade)
+id
+#> [1] 3 2 2 1 3
+info[id, ]
+#>     grade      desc  fail
+#> 3       1      Poor  TRUE
+#> 2       2      Good FALSE
+#> 2.1     2      Good FALSE
+#> 1       3 Excellent FALSE
+#> 3.1     1      Poor  TRUE
+
+```
+
+### 4.5.3 Random samples and bootstraps (integer subsetting)
+
+```{r}
+
+df <- data.frame(x = c(1, 2, 3, 1, 2), y = 5:1, z = letters[1:5])
+
+# Randomly reorder
+df[sample(nrow(df)), ]
+#>   x y z
+#> 5 2 1 e
+#> 3 3 3 c
+#> 4 1 2 d
+#> 1 1 5 a
+#> 2 2 4 b
+
+# Select 3 random rows
+df[sample(nrow(df), 3), ]
+#>   x y z
+#> 4 1 2 d
+#> 2 2 4 b
+#> 1 1 5 a
+
+# Select 6 bootstrap replicates
+df[sample(nrow(df), 6, replace = TRUE), ]
+#>     x y z
+#> 5   2 1 e
+#> 5.1 2 1 e
+#> 5.2 2 1 e
+#> 2   2 4 b
+#> 3   3 3 c
+#> 3.1 3 3 c
+
+```
+
+
+### 4.5.4 Ordering (integer subsetting)
+
+```{r}
+
+x <- c("b", "c", "a")
+order(x)
+#> [1] 3 1 2
+x[order(x)]
+#> [1] "a" "b" "c"
+
+```
+
+Using `order` with two dimensions.
+
+```{r}
+
+# Randomly reorder df
+df2 <- df[sample(nrow(df)), 3:1]
+df2
+#>   z y x
+#> 5 e 1 2
+#> 1 a 5 1
+#> 4 d 2 1
+#> 2 b 4 2
+#> 3 c 3 3
+
+df2[order(df2$x), ]
+#>   z y x
+#> 1 a 5 1
+#> 4 d 2 1
+#> 5 e 1 2
+#> 2 b 4 2
+#> 3 c 3 3
+df2[, order(names(df2))]
+#>   x y z
+#> 5 2 1 e
+#> 1 1 5 a
+#> 4 1 2 d
+#> 2 2 4 b
+#> 3 3 3 c
+
+```
+
+### 4.5.5 Expanding aggregated counts (integer subsetting)
+
+when you get identical rows collapsed into one, with a column for count `n`.
+
+```{r}
+
+df <- data.frame(x = c(2, 4, 1), y = c(9, 11, 6), n = c(3, 5, 1))
+rep(1:nrow(df), df$n)
+#> [1] 1 1 1 2 2 2 2 2 3
+
+df[rep(1:nrow(df), df$n), ]
+#>     x  y n
+#> 1   2  9 3
+#> 1.1 2  9 3
+#> 1.2 2  9 3
+#> 2   4 11 5
+#> 2.1 4 11 5
+#> 2.2 4 11 5
+#> 2.3 4 11 5
+#> 2.4 4 11 5
+#> 3   1  6 1
+
+```
+
+### 4.5.6 Removing columns from data frames (character)
+
+```{r}
+
+df <- data.frame(x = 1:3, y = 3:1, z = letters[1:3])
+df$z <- NULL
+df
+
+
+```
+
+```{r}
+
+df <- data.frame(x = 1:3, y = 3:1, z = letters[1:3])
+df[c("x", "y")]
+#>   x y
+#> 1 1 3
+#> 2 2 2
+#> 3 3 1
+
+```
+
+### 4.5.7 Selecting rows based on a condition (logical subsetting)
+
+```{r}
+
+mtcars[mtcars$gear == 5, ]
+#>                 mpg cyl  disp  hp drat   wt qsec vs am gear carb
+#> Porsche 914-2  26.0   4 120.3  91 4.43 2.14 16.7  0  1    5    2
+#> Lotus Europa   30.4   4  95.1 113 3.77 1.51 16.9  1  1    5    2
+#> Ford Pantera L 15.8   8 351.0 264 4.22 3.17 14.5  0  1    5    4
+#> Ferrari Dino   19.7   6 145.0 175 3.62 2.77 15.5  0  1    5    6
+#> Maserati Bora  15.0   8 301.0 335 3.54 3.57 14.6  0  1    5    8
+
+mtcars[mtcars$gear == 5 & mtcars$cyl == 4, ]
+#>                mpg cyl  disp  hp drat   wt qsec vs am gear carb
+#> Porsche 914-2 26.0   4 120.3  91 4.43 2.14 16.7  0  1    5    2
+#> Lotus Europa  30.4   4  95.1 113 3.77 1.51 16.9  1  1    5    2
+
+
+
+```
+
+### 4.5.8 Boolean algebra versus sets (logical and integer)
+
+```{r}
+
+x <- sample(10) < 4
+which(x)
+#> [1] 2 3 4
+
+unwhich <- function(x, n) {
+  out <- rep_len(FALSE, n)
+  out[x] <- TRUE
+  out
+}
+unwhich(which(x), 10)
+#>  [1] FALSE  TRUE  TRUE  TRUE FALSE FALSE FALSE FALSE FALSE FALSE
+
+```
+
+
+```{r}
+
+(x1 <- 1:10 %% 2 == 0)
+#>  [1] FALSE  TRUE FALSE  TRUE FALSE  TRUE FALSE  TRUE FALSE  TRUE
+(x2 <- which(x1))
+#> [1]  2  4  6  8 10
+(y1 <- 1:10 %% 5 == 0)
+#>  [1] FALSE FALSE FALSE FALSE  TRUE FALSE FALSE FALSE FALSE  TRUE
+(y2 <- which(y1))
+#> [1]  5 10
+
+# X & Y <-> intersect(x, y)
+x1 & y1
+#>  [1] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE  TRUE
+intersect(x2, y2)
+#> [1] 10
+
+# X | Y <-> union(x, y)
+x1 | y1
+#>  [1] FALSE  TRUE FALSE  TRUE  TRUE  TRUE FALSE  TRUE FALSE  TRUE
+union(x2, y2)
+#> [1]  2  4  6  8 10  5
+
+# X & !Y <-> setdiff(x, y)
+x1 & !y1
+#>  [1] FALSE  TRUE FALSE  TRUE FALSE  TRUE FALSE  TRUE FALSE FALSE
+setdiff(x2, y2)
+#> [1] 2 4 6 8
+
+# xor(X, Y) <-> setdiff(union(x, y), intersect(x, y))
+xor(x1, y1)
+#>  [1] FALSE  TRUE FALSE  TRUE  TRUE  TRUE FALSE  TRUE FALSE FALSE
+setdiff(union(x2, y2), intersect(x2, y2))
+#> [1] 2 4 6 8 5
+
+```
+
+
+
+
