@@ -1,0 +1,10 @@
+---
+title: Advanced R - Chapter 4 Notes
+format:
+  html:
+      toc: true
+---
+
+# 4 Subsetting
+-   
+-   
