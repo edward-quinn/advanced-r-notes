@@ -163,7 +163,7 @@ d2[, 2] <- d2[, 2] * 2
 
 ```
 
-In this example, the object that is the first column is pointed to by both d1 and d2. Modifying a row means every column is modified, so each column must be "copied" (and then edited?).
+In this example, the object that is the first column is pointed to by both d1 and d2. Modifying a row means every column is modified, so each column must be "copied" and then edited.
 
 ```{r}
 
@@ -207,7 +207,7 @@ lobstr::ref(b,c)
 
 ## 2.4 Object size
 
-How much memory does an object occupy? Use `lobstr::ojb_size`.
+How much memory does an object occupy? Use `lobstr::obj_size`.
 
 ```{r}
 
@@ -243,21 +243,200 @@ obj_size(rep(banana, 100))
 
 ```
 
+
+Alternative representation means sequences of numbers are all the same size. Only the first and last numbers are stored.
+
 ```{r}
 
+obj_size(1:5)
+
+obj_size(1:1e6)
+
+
+```
+
+
+### 2.4.1 Exercises 
+
+```{r}
+
+y <- rep(list(runif(1e4)), 100)
+
+object.size(y)
+#> 8005648 bytes
+obj_size(y)
+#> 80.90 kB
+
+# obj_size account for alternative representation of sequences.
+
+```
+
+```{r}
+
+funs <- list(mean, sd, var)
+obj_size(funs)
+#> 18.76 kB
+
+# The size is "somewhat misleading" because the size of lists refers to their names, not their objects?
+
+```
+
+```{r}
+
+a <- runif(1e6)
+obj_size(a)
+
+b <- list(a, a)
+obj_size(b)
+obj_size(a, b)
+
+b[[1]][[1]] <- 10
+obj_size(b)
+obj_size(a, b)
+
+b[[2]][[1]] <- 10
+obj_size(b)
+obj_size(a, b)
+
+# alt rep sequences are aking up 8 MB, and here we copy-on-modify twice, 
+# creating three 8 MB sequences for a total of 24 MB by the last line of code.
+```
+
+
+## 2.5 Modify-in-place
+
+There are exceptions to copy-on-modify: single-named environments and objects. Objects with a single binding are performance optimized and environments are always modified in place.
+
+```{r}
+
+v <- c(1, 2, 3)
+v[[3]] <- 4 # modified in place
+
+```
+
+
+
+```{r}
+
+x <- data.frame(matrix(runif(5 * 1e4), ncol = 5))
+medians <- vapply(x, median, numeric(1))
+
+for (i in seq_along(medians)) {
+  x[[i]] <- x[[i]] - medians[[i]]
+}
+
+```
+
+A slow for loop. Slow because the dataframe is being copied 15 times - 3 times per iteration.
+
+```{r}
+
+cat(tracemem(x), "\n")
+#> <0x7f80c429e020> 
+
+for (i in 1:5) {
+  x[[i]] <- x[[i]] - medians[[i]]
+}
+#> tracemem[0x7f80c429e020 -> 0x7f80c0c144d8]: 
+#> tracemem[0x7f80c0c144d8 -> 0x7f80c0c14540]: [[<-.data.frame [[<- 
+#> tracemem[0x7f80c0c14540 -> 0x7f80c0c145a8]: [[<-.data.frame [[<- 
+#> tracemem[0x7f80c0c145a8 -> 0x7f80c0c14610]: 
+#> tracemem[0x7f80c0c14610 -> 0x7f80c0c14678]: [[<-.data.frame [[<- 
+#> tracemem[0x7f80c0c14678 -> 0x7f80c0c146e0]: [[<-.data.frame [[<- 
+#> tracemem[0x7f80c0c146e0 -> 0x7f80c0c14748]: 
+#> tracemem[0x7f80c0c14748 -> 0x7f80c0c147b0]: [[<-.data.frame [[<- 
+#> tracemem[0x7f80c0c147b0 -> 0x7f80c0c14818]: [[<-.data.frame [[<- 
+#> tracemem[0x7f80c0c14818 -> 0x7f80c0c14880]: 
+#> tracemem[0x7f80c0c14880 -> 0x7f80c0c148e8]: [[<-.data.frame [[<- 
+#> tracemem[0x7f80c0c148e8 -> 0x7f80c0c14950]: [[<-.data.frame [[<- 
+#> tracemem[0x7f80c0c14950 -> 0x7f80c0c149b8]: 
+#> tracemem[0x7f80c0c149b8 -> 0x7f80c0c14a20]: [[<-.data.frame [[<- 
+#> tracemem[0x7f80c0c14a20 -> 0x7f80c0c14a88]: [[<-.data.frame [[<- 
+
+untracemem(x)
+
+```
+
+Using a list reduces the number of copies being made
+
+```{r}
+
+y <- as.list(x)
+cat(tracemem(y), "\n")
+#> <0x7f80c5c3de20>
+  
+for (i in 1:5) {
+  y[[i]] <- y[[i]] - medians[[i]]
+}
+
+```
+
+Environments are always modified in place. This is referred to as **reference semantics**. Modifying an environment does not change the existing bindings within an environment.
+
+```{r}
+
+e1 <- rlang::env(a = 1, b = 2, c = 3)
+e2 <- e1
+
+```
+
+Changing a binding means the environment is modified in place. That is, after `e1$c` is modified, e2$c now points to the same object.
+
+```{r}
+
+e1$c <- 4
+e2$c
+#> [1] 4
 
 
 
 ```
 
-## 2.5 Modify-in-place
+Environments can contain themselves
 
-There are exceptions to copy-on-modify: single-named environments and objects.
+```{r}
 
+e <- rlang::env()
+e$self <- e
+
+ref(e)
+#> █ [1:0x557140f86b08] <env> 
+#> └─self = [1:0x557140f86b08]
+
+```
+
+### 2.5.3 Exercises
+
+```{r}
+
+x <- list()
+x[[1]] <- x
+
+# Doesn't create a circular list because x is modified in place due to single binding?
+
+```
 
 ## 2.6 Unbinding and the garbage collector
 
 The garbage collector frees memory from objects without a referenced name.
+
+```{r}
+
+x <- 1:3
+x <- 2:4
+rm(x)
+
+
+```
+
+The objects that x was bound to still exist. Use the garbage collector to get rid of them. This actually runs automatically when you need more memory, so you never need to run it yourself.
+
+```{r}
+
+gc() # it does tell you the memory being used, which can be useful
+mem_used()
+
+```
 
 
 

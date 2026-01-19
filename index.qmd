@@ -10,3 +10,4 @@ Wickham's book can be found [here](https://adv-r.hadley.nz/){.external target="_
 
 - [Chapter 1 Notes](chapter_01_notes.qmd){.external target="_blank"}
 - [Chapter 2 Notes](chapter_02_notes.qmd){.external target="_blank"}
+- [Chapter 3 Notes](chapter_03_notes.qmd){.external target="_blank"}

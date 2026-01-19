@@ -1,0 +1,16 @@
+---
+title: Advanced R - Chapter 3 Notes
+format:
+  html:
+      toc: true
+---
+
+# 2 Vectors
+-   The distinction here allows prediction of when R will copy and object, with implications for performance and memory usage.
+
+
+```{r}
+
+
+
+```
