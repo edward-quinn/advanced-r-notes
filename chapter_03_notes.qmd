@@ -1,5 +1,6 @@
 ---
 title: Advanced R - Chapter 3 Notes
+freeze: true
 format:
   html:
       toc: true

@@ -7,6 +7,285 @@ format:
 
 # 6 Functions
 
+## 6.2 Function Fundamentals
+
+Section 6.2 describes the basics of creating a function, the three main components of a function, and the exception to many function rules: primitive functions (which are implemented in C, not R).
+
+Functions are objects, just like vectors.
+
+Parts of a function
+- The `formals()`, the list of arguments that control how you call the function
+- The `body()`, the code inside the function
+- The `environment()`, the data structure that determines how the function finds the values associated with the names.
+
+You specify the formals and body, but the environment is implicitly specified.
+
+```{r}
+
+f02 <- function(x, y) {
+  # A comment
+  x + y
+}
+
+formals(f02)
+#> $x
+#> 
+#> 
+#> $y
+
+body(f02)
+#> {
+#>     x + y
+#> }
+
+environment(f02)
+#> <environment: R_GlobalEnv>
+
+```
+
+Functions can posses attributes.
+
+There is one exception to the rule that a function has three components. Primitive functions like `sum()` and `[` call C code directly.
+
+```{r}
+
+sum
+#> function (..., na.rm = FALSE)  .Primitive("sum")
+`[`
+#> .Primitive("[")
+
+# they are types 'builtin' or 'special'
+
+typeof(sum)
+#> [1] "builtin"
+typeof(`[`)
+#> [1] "special"
+
+# because they exist in C, their formals, body, and environment are NULL
+
+formals(sum)
+#> NULL
+body(sum)
+#> NULL
+environment(sum)
+#> NULL
+
+```
+
+
+**First-class functions** just means R functions are objects. They don't require special syntax to define.
+
+```{r}
+
+f01 <- function(x) {
+  sin(1 / x ^ 2)
+}
+
+```
+
+
+
+Naming functions is not strictly necessary. Unnamed functions are called **anonymous functions**.
+
+```{r}
+
+lapply(mtcars, function(x) length(unique(x)))
+Filter(function(x) !is.numeric(x), mtcars)
+integrate(function(x) sin(x) ^ 2, 0, pi)
+
+```
+
+Functions can be contained in a list
+
+```{r}
+
+funs <- list(
+  half = function(x) x / 2,
+  double = function(x) x * 2
+)
+
+funs$double(10)
+#> [1] 20
+
+```
+
+If you already have the arguments in a data structure, you can use `do.call()`
+
+```{r}
+args <- list(1:10, na.rm = TRUE)
+
+do.call(mean, args)
+#> [1] 5.5
+
+```
+
+
+
+## Function Composition
+
+Section 6.3 discusses the strengths and weaknesses of the three forms of function composition commonly used in R code.
+
+You can nest function calls or save intermediate results as variables. You can also pipe.
+
+```{r}
+
+square <- function(x) x^2
+deviation <- function(x) x - mean(x)
+x <- runif(100)
+
+sqrt(mean(square(deviation(x))))
+#> [1] 0.274
+
+out <- deviation(x)
+out <- square(out)
+out <- mean(out)
+out <- sqrt(out)
+out
+#> [1] 0.274
+
+
+```
+
+## Lexical scoping
+
+Section 6.4 shows you how R finds the value associated with a given name, i.e. the rules of lexical scoping.
+
+**Scoping** is finding the value associated with a name.
+
+```{r}
+
+x <- 10
+g01 <- function() {
+  x <- 20
+  x
+}
+
+g01()
+
+```
+
+R uses **lexical scoping**: it looks up the values of names based on how a function is defined, not how it is called. "Lexical" indicates that the scoping rules use a parse-time, rather than a run-time structure.
+
+R's lexical scoping follows four primary rules:
+1. Name masking
+2. Functions versus variables
+3. A fresh start
+4. Dynmamic lookup
+
+Names defined inside a function mask names defined outside a function.
+
+```{r}
+
+x <- 10
+y <- 20
+g02 <- function() {
+  x <- 1
+  y <- 2
+  c(x, y)
+}
+g02()
+#> [1] 1 2
+
+```
+
+
+If a name isn't defined inside a function, R looks one level up.
+
+```{r}
+
+x <- 2
+g03 <- function() {
+  y <- 1
+  c(x, y)
+}
+g03()
+#> [1] 2 1
+
+# And this doesn't change the previous value of y
+y
+#> [1] 20
+
+```
+
+The same rules apply for a function defined inside of another function.
+
+
+```{r}
+
+x <- 1
+g04 <- function() {
+  y <- 2
+  i <- function() {
+    z <- 3
+    c(x, y, z)
+  }
+  i()
+}
+g04()
+
+```
+
+
+The same scoping rules apply to functions themselves, not just the arguments or body of a function.
+
+```{r}
+
+g07 <- function(x) x + 1
+g08 <- function() {
+  g07 <- function(x) x + 100
+  g07(10)
+}
+g08()
+#> [1] 110
+
+```
+
+
+A fresh start
+
+```{r}
+
+```
+
+## Lazy evaluation
+
+Section 6.5 is devoted to an important property of function arguments: they are only evaluated when used for the first time.
+
+```{r}
+
+
+
+```
+
+## ... (dot-dot-dot)
+
+Section 6.6 discusses the special ... argument, which allows you to pass on extra arguments to another function.
+
+```{r}
+
+
+
+```
+
+## 6.7 Exiting a function
+
+Section 6.7 discusses the two primary ways that a function can exit, and how to define an exit handler, code that is run on exit, regardless of what triggers it.
+
+```{r}
+
+
+
+```
+
+## 6.8 Function forms
+
+Section 6.8 shows you the various ways in which R disguises ordinary function calls, and how you can use the standard prefix form to better understand what’s going on.
+
+```{r}
+
+
+
+```
 
 ```{r}
 
