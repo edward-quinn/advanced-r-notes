@@ -245,17 +245,100 @@ A fresh start
 
 ```{r}
 
+g11 <- function() {
+  if (!exists("a")) {
+    a <- 1
+  } else {
+    a <- a + 1
+  }
+  a
+}
+
+g11()
+g11()
+
+```
+
+`g11()` always returns the same value because every time a function is called a new environment is created to host its execution.
+
+R looks fo r values when a function is run, not when the function is created.
+
+```{r}
+
+g12 <- function() x + 1
+x <- 15
+g12()
+#> [1] 16
+
+x <- 20
+g12()
+#> [1] 21
+
 ```
 
 ## Lazy evaluation
 
-Section 6.5 is devoted to an important property of function arguments: they are only evaluated when used for the first time.
+Section 6.5 is devoted to an important property of function arguments: they are only evaluated when used for the first time. Evaluation only takes place for function arguments when they are accessed.
+
+Lazy evaluation powered by promises, which have three components: 
+1. An expression, like `x + y` which gives rise to the delayed computation
+2. An environment where the expression should be evaluated
+3. A value, which is computed and cached the first time a promise is accessed when the expression is evaluated in the specified environment.
+
+Lazy evaluation allows default values to be defined in terms of other arguments, or in terms of variables defined later in the function:
 
 ```{r}
 
+h04 <- function(x = 1, y = x * 2, z = a + b) {
+  a <- 10
+  b <- 100
+  
+  c(x, y, z)
+}
 
+h04()
+#> [1]   1   2 110
 
 ```
+
+This technique is not recommended. Default and user supplied arguments have slightly different evaluation environments.
+
+```{r}
+
+h05 <- function(x = ls()) {
+  a <- 1
+  x
+}
+
+# ls() evaluated inside h05:
+h05()
+#> [1] "a" "x"
+
+# ls() evaluated in global environment:
+h05(ls())
+#> [1] "h05"
+
+```
+
+To determine is an argument's value comes from the user or from a default, you can use `missing()`:
+
+```{r}
+
+h06 <- function(x = 10) {
+  list(missing(x), x)
+}
+str(h06())
+#> List of 2
+#>  $ : logi TRUE
+#>  $ : num 10
+str(h06(10))
+#> List of 2
+#>  $ : logi FALSE
+#>  $ : num 10
+
+```
+
+I don't get how `missing()` is working here.
 
 ## ... (dot-dot-dot)
 
@@ -263,7 +346,67 @@ Section 6.6 discusses the special ... argument, which allows you to pass on extr
 
 ```{r}
 
+i01 <- function(y, z) {
+  list(y = y, z = z)
+}
 
+i02 <- function(x, ...) {
+  i01(...)
+}
+
+str(i02(x = 1, y = 2, z = 3))
+#> List of 2
+#>  $ y: num 2
+#>  $ z: num 3
+
+```
+
+`list(...)` evaluates the arguments and stores them in a list:
+
+```{r}
+
+i04 <- function(...) {
+  list(...)
+}
+str(i04(a = 1, b = 2))
+#> List of 2
+#>  $ a: num 1
+#>  $ b: num 2
+
+```
+
+There are two primary uses of `...`:
+1. When a function takes a function as an argument, you need a way to pass additional arguments:
+
+```{r}
+
+x <- list(c(1, 3, NA), c(4, NA, 6))
+str(lapply(x, mean, na.rm = TRUE))
+#> List of 2
+#>  $ : num 2
+#>  $ : num 5
+
+```
+
+2. To allow S3 objects to take arbitray extra arguments.
+
+```{r}
+
+print(factor(letters), max.levels = 4)
+
+print(y ~ x, showEnv = TRUE)
+
+```
+
+There are disadvantages of using `...`:
+
+1. Must explain where arguments go
+2. A misspelled argument does not raise an error.
+
+```{r}
+
+sum(1, 2, NA, na_rm = TRUE)
+#> [1] NA
 
 ```
 
@@ -271,24 +414,235 @@ Section 6.6 discusses the special ... argument, which allows you to pass on extr
 
 Section 6.7 discusses the two primary ways that a function can exit, and how to define an exit handler, code that is run on exit, regardless of what triggers it.
 
+Most functions exit by returning a value or throwing an error.
+
+Returns can be implicit or explicit. With the implicit method, the last evaluated expression is returned:
+
 ```{r}
 
-
+j01 <- function(x) {
+  if (x < 10) {
+    0
+  } else {
+    10
+  }
+}
+j01(5)
+#> [1] 0
+j01(15)
+#> [1] 10
 
 ```
+
+Use `return()` to be explicit:
+
+```{r}
+
+j02 <- function(x) {
+  if (x < 10) {
+    return(0)
+  } else {
+    return(10)
+  }
+}
+
+j02(11)
+
+```
+
+Most functions return visibly:
+
+```{r}
+
+j03 <- function() 1
+j03()
+#> [1] 1
+
+```
+
+but you can turn off automatic printing with `invisible()`:
+
+```{r}
+
+j04 <- function() invisible(1)
+j04()
+
+```
+
+The most common function that returns invisibly is `<-`.
+
+```{r}
+
+a <- 2
+(a <- 2)
+#> [1] 2
+
+```
+
+**Errors**. If a function cannot complete its assigned task, it should throw an error with `stop()`. This immediately terminates the execution of a function.
+
+```{r}
+
+# j05 <- function() {
+#   stop("I'm an error")
+#   return(10)
+# }
+# j05()
+# #> Error in j05(): I'm an error
+
+```
+
+use `on.exit()` to restore an environment after altering it inside of a function. Now you can place clean-up code next to the code that requires clean-up:
+
+```{r}
+
+# cleanup <- function(dir, code) {
+#   old_dir <- setwd(dir)
+#   on.exit(setwd(old_dir), add = TRUE)
+  
+#   old_opt <- options(stringsAsFactors = FALSE)
+#   on.exit(options(old_opt), add = TRUE)
+# }
+
+```
+
 
 ## 6.8 Function forms
 
 Section 6.8 shows you the various ways in which R disguises ordinary function calls, and how you can use the standard prefix form to better understand what’s going on.
 
+Function calls come in four varieties:
+
+1. prefix: the function name comes before the arguments
+2. infix: the function name comes in between the arguments, like `x + y`
+3. replacement: functions that replace values by assignment, like `names(df)`
+4. special: functions like `[[`, `if`, and `for`. No consistent structure but important.
+
+All can be written in prefix form.
+
 ```{r}
 
+# x + y
+# `+`(x, y)
 
+# names(df) <- c("x", "y", "z")
+# `names<-`(df, c("x", "y", "z"))
+
+# for(i in 1:10) print(i)
+# `for`(i, 1:10, print(i))
 
 ```
 
 ```{r}
 
+add <- function(x, y) x + y
+lapply(list(1:3, 4:5), add, 3)
+#> [[1]]
+#> [1] 4 5 6
+#> 
+#> [[2]]
+#> [1] 7 8
 
 
 ```
+
+is the same as...
+
+```{r}
+
+lapply(list(1:3, 4:5), `+`, 3)
+#> [[1]]
+#> [1] 4 5 6
+#> 
+#> [[2]]
+#> [1] 7 8
+
+```
+
+**Prefix form**
+
+YOu can specify arguments in three ways with the prefix form:
+1. by position
+2. partial matching
+3. by name
+
+```{r}
+
+k01 <- function(abcdef, bcde1, bcde2) {
+  list(a = abcdef, b1 = bcde1, b2 = bcde2)
+}
+str(k01(1, 2, 3))
+#> List of 3
+#>  $ a : num 1
+#>  $ b1: num 2
+#>  $ b2: num 3
+str(k01(2, 3, abcdef = 1))
+#> List of 3
+#>  $ a : num 1
+#>  $ b1: num 2
+#>  $ b2: num 3
+
+# Can abbreviate long argument names:
+str(k01(2, 3, a = 1))
+#> List of 3
+#>  $ a : num 1
+#>  $ b1: num 2
+#>  $ b2: num 3
+
+# # But this doesn't work because abbreviation is ambiguous
+# str(k01(1, 3, b = 1))
+# #> Error in k01(1, 3, b = 1): argument 3 matches multiple formal arguments
+
+```
+
+**infix functions** are functions that come in between its arguments, and therefore have two arguments.
+
+```{r}
+
+`%+%` <- function(a, b) paste0(a, b)
+"new " %+% "string"
+#> [1] "new string"
+
+```
+
+```{r}
+
+`% %` <- function(a, b) paste(a, b)
+`%/\\%` <- function(a, b) paste(a, b)
+
+"a" % % "b"
+#> [1] "a b"
+"a" %/\% "b"
+#> [1] "a b"
+
+```
+
+**Replacement functions** act like they modify their arguments in place, and have the special name `xxx<-`.
+
+```{r}
+
+`second<-` <- function(x, value) {
+  x[2] <- value
+  x
+}
+
+x <- 1:10
+second(x) <- 5L
+x
+#>  [1]  1  5  3  4  5  6  7  8  9 10
+
+```
+
+```{r}
+
+x <- 1:10
+tracemem(x)
+#> <0x7ffae71bd880>
+
+second(x) <- 6L
+#> tracemem[0x7ffae71bd880 -> 0x7ffae61b5480]: 
+#> tracemem[0x7ffae61b5480 -> 0x7ffae73f0408]: second<- 
+
+```
+
+**Special forms**
