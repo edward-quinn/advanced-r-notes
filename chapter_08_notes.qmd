@@ -1,0 +1,8 @@
+---
+title: Advanced R - Chapter 8 Notes
+format:
+  html:
+      toc: true
+---
+
+# 8 Conditions

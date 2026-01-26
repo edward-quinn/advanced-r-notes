@@ -3,6 +3,7 @@ title: Advanced R - Chapter 6 Notes
 format:
   html:
       toc: true
+freeze: true
 ---
 
 # 6 Functions

@@ -1,0 +1,501 @@
+---
+title: Advanced R - Chapter 7 Notes
+format:
+  html:
+      toc: true
+---
+
+# 7 Environments
+
+## 7.2 Environment basics
+
+Section 7.2 introduces you to the basic properties of an environment and shows you how to create your own.
+
+An environment is similar to a named list, with four exceptions:
+1. every name must be unique
+2. the names in an environment are not ordered.
+3. An enviornment has a parent.
+4. Environments are not copied when modified
+
+To create an environment, use `rlang::env()`.
+
+```{r}
+
+library(rlang)
+
+e1 <- env(
+  a = FALSE,
+  b = "a",
+  c = 2.3,
+  d = 1:3,
+)
+
+```
+
+The job of an environment is to **bind** a set of names to a set of values. 
+
+Environments can contain themselves:
+
+```{r}
+
+e1$d <- e1
+
+env_print(e1) # note the env in d
+
+```
+
+```{r}
+
+# get the names of an environment
+env_names(e1)
+
+# find out what the current environment is
+current_env()
+
+# or use environment()
+environment()
+
+# compare environments with identical()
+identical(global_env(), current_env())
+```
+
+Every environment has a **parent**. Set the parent by supplying an unnamed argument to `env()`. The parent is what's used to implement lexical scoping.
+
+```{r}
+
+e2a <- env(d = 4, e = 5)
+e2b <- env(e2a, a = 1, b = 2, c = 3)
+
+env_parent(e2a)
+env_parent(e2b)
+
+```
+
+Only the **empty environment** doesn't have a parent
+
+```{r}
+
+e2c <- env(empty_env(), d = 4, e = 5)
+e2d <- env(e2c, a = 1, b = 2, c = 3)
+
+e2c <- env(empty_env(), d = 4, e = 5)
+e2d <- env(e2c, a = 1, b = 2, c = 3)
+
+env_parents(e2b)
+#> [[1]]   <env: 0x559735c4a248>
+#> [[2]] $ <env: global>
+env_parents(e2d)
+#> [[1]]   <env: 0x5597366d1bf8>
+#> [[2]] $ <env: empty>
+
+```
+
+`env_parents()` stops when it gets to the global environment.
+
+**Super assignment**
+
+`<<-` never creates a variable in the current environment, but instead modifies an existing variable found in a parent environment.
+
+```{r}
+
+x <- 0
+f <- function() {
+  x <<- 1
+}
+f()
+x
+#> [1] 1
+
+```
+
+Getting and setting elements of an environment
+
+```{r}
+
+e3 <- env(x = 1, y = 2)
+e3$x
+#> [1] 1
+e3$z <- 3
+e3[["z"]]
+#> [1] 3
+
+```
+
+You can't subset with numeric indices and you can't use `[`
+
+```{r}
+
+# e3[[1]]
+# #> Error in e3[[1]]: wrong arguments for subsetting an environment
+
+# e3[c("x", "y")]
+# #> Error in e3[c("x", "y")]: object of type 'environment' is not subsettable
+
+```
+
+Other ways to add bindings to an environment:
+
+```{r}
+
+env_poke(e3, "a", 100)
+e3$a
+#> [1] 100
+
+```
+
+`env_bind()` allows binding of multiple values
+
+```{r}
+
+env_bind(e3, a = 10, b = 20)
+env_names(e3)
+#> [1] "x" "y" "z" "a" "b"
+
+```
+
+```{r}
+env_has(e3, "a")
+#>    a 
+#> TRUE
+
+# To unbind:
+
+env_unbind(e3, "a")
+env_has(e3, "a")
+
+```
+
+
+**Advanced bindings**
+
+`env_bind_lazy() creates **delayed bindings**, which are evaluated the first time they are acessed. Delayed bindings create promises. See how the value is computed once, the first time it is accessed, then it is cached and returned immediately upon later calls.
+
+```{r}
+
+env_bind_lazy(current_env(), b = {Sys.sleep(1); 1})
+
+system.time(print(b))
+#> [1] 1
+#>    user  system elapsed 
+#>       0       0       1
+system.time(print(b))
+#> [1] 1
+#>    user  system elapsed 
+#>       0       0       0
+
+```
+
+The primary use for delayed bindings is in `autoload()`, which allows R packages to provide datasets that behave like they are loaded in memory, even though they're only loaded from disk when needed.
+
+`env_bind_active()` creates active bindings, which are recomputed every time they're accessed:
+
+```{r}
+
+env_bind_active(current_env(), z1 = function(val) runif(1))
+
+z1
+#> [1] 0.0808
+z1
+#> [1] 0.834
+
+```
+
+## 7.3 recursing over environments
+
+Section 7.3 provides a function template for computing with environments, illustrating the idea with a useful function.
+
+For example, you could search for the name of function and start the search at a child environment.
+
+```{r}
+
+where <- function(name, env = caller_env()) {
+  if (identical(env, empty_env())) {
+    # Base case
+    stop("Can't find ", name, call. = FALSE)
+  } else if (env_has(env, name)) {
+    # Success case
+    env
+  } else {
+    # Recursive case
+    where(name, env_parent(env))
+  }
+}
+
+```
+
+Illustrate the cases where a name can't be found, where it is found, and then where it is recursively searched for:
+
+```{r}
+
+# where("yyy")
+# #> Error: Can't find yyy
+
+x <- 5
+where("x")
+#> <environment: R_GlobalEnv>
+
+where("mean")
+#> <environment: base>
+
+```
+
+You could rewrite `where()` as a for loop instead of a recursive function:
+
+```{r}
+
+f2 <- function(..., env = caller_env()) {
+  while (!identical(env, empty_env())) {
+    if (success) {
+      # success case
+      return()
+    }
+    # inspect parent
+    env <- env_parent(env)
+  }
+
+  # base case
+}
+
+```
+
+## 7.4 Special environments
+
+Section 7.4 describes environments used for special purposes: for packages, within functions, for namespaces, and for function execution.
+
+Each package attached by `library()` or `require()` becomes one of the parents of the global environment. Packages loaded (not attached) with `::` do not become parents. The immediate parent of the global environment is the last package you attached., the parent of that package is the second to last package you attached.
+
+Follow all the packages back in the order in which they were attached - this gives the **search path**.
+
+```{r}
+
+# You can see the names of these environments with:
+
+base::search()
+
+rlang::search_envs()
+
+
+```
+
+The last two environments on the search path are always the same:
+1. The `Autoloads()` environment uses delayed bindings to save memory by only loading package objects (like big datasets) when needed.
+2. The base environment. It is special because it has to be able to bootstrap the loading of all other packages. You can access it directly with `base_env()`.
+
+
+
+**The function environment**
+
+A function binds the current environment. Functions that capture their environments are called closures. Sometimes the word *function* and *closure* are used interchangeably in R documentation.
+
+Get the function environment:
+
+```{r}
+
+y <- 1
+f <- function(x) x + y
+fn_env(f)
+#> <environment: R_GlobalEnv>
+
+```
+
+`f()` binds the environment that binds the name `f` to the function. Not always the case. In the code below, `g()` binds the global environment, but `g` is bound in a new environment `e()`.
+
+
+
+```{r}
+
+e <- env()
+e$g <- function() 1
+
+```
+
+**Namespaces** ensure that you don't find different functions based on the order in which pacakges were loaded. Every function is associated with a package enviornment and the **namespace** environment.
+
+- The package environment is the external interface to the package. It's how you, the R user, find a function in ana attached package or with `::`. Its parent is determined by search path, i.e. the order in whic packages have been attached.
+
+- The namespace environment is the internal interface to the package. The package environment controls how we find the function; the namespace controls how the functions finds its variables.
+
+Every binding in the package environment is also found in the namespace environment; this ensures every function can use every other function in the package. Not all bindings in the namespace are in the package environment - this allows one to hide internals of a package from the user.
+
+Every namespace environment has the same set of ancestors:
+
+Each namespace has an imports environment that contains bindings to all the functions used by the package. The imports environment is controlled by the package developer with the NAMESPACE file.
+
+Explicitly importing every base function would be tiresome, so the parent of the imports environment is the base namespace. The base namespace contains the same bindings as the base environment, but it has a different parent.
+
+The parent of the base namespace is the global environment. This means that if a binding isn’t defined in the imports environment the package will look for it in the usual way. This is usually a bad idea (because it makes code depend on other loaded packages), so R CMD check automatically warns about such code. It is needed primarily for historical reasons, particularly due to how S3 method dispatch works.
+
+**Execution Environments**
+
+
+
+```{r}
+
+g <- function(x) {
+  if (!env_has(current_env(), "a")) {
+    message("Defining a")
+    a <- 1
+  } else {
+    a <- a + 1
+  }
+  a
+}
+
+g(10)
+#> Defining a
+#> [1] 1
+g(10)
+#> Defining a
+#> [1] 1
+
+
+```
+
+This function returns the same value each time because of the fresh start principle. Each time a function is called, a new enrionment is created to host execution. This is called the execution environment, and its parent is the function environment.
+
+
+```{r}
+
+h <- function(x) {
+  # 1. The function called with x = 1
+  a <- 2 # 2. a is bound to value 2
+  x + a
+}
+y <- h(1) # 3. Functio completes returning value 3. Execution environment goes away.
+
+```
+
+
+Execution environments are usually ephemeral and garbage collected, but you can make it stay around.
+
+```{r}
+
+h2 <- function(x) {
+  a <- x * 2
+  current_env()
+}
+
+e <- h2(x = 10)
+env_print(e)
+#> <environment: 0x559733944920>
+#> Parent: <environment: global>
+#> Bindings:
+#> • a: <dbl>
+#> • x: <dbl>
+fn_env(h2)
+#> <environment: R_GlobalEnv>
+
+```
+
+You can also return an object with a binding to that environment.
+
+
+```{r}
+
+plus <- function(x) {
+  function(y) x + y
+}
+
+plus_one <- plus(1)
+plus_one
+#> function (y) 
+#> x + y
+#> <environment: 0x559737ab06b8>
+
+```
+
+## 7.5 Call stacks
+
+Section 7.5 explains the last important environment: the caller environment. This requires you to learn about the call stack, that describes how a function was called. You’ll have seen the call stack if you’ve ever called traceback() to aid debugging.
+
+**Caller environment** is accessed with `rlang::caller_env()`. This provides the environment from which the function was called. `parent.frame()` is equivalent to `caller_env()`, but it returns an environment, not a frame.
+
+To understand the **caller environment**, we need to understand:
+1. the **call stack**
+2. **frames**
+
+Executing a function creates two types of context: 
+1. the execution environment, which is a child of the function environment, which is determined by where the function was created.
+2. the call stack, which is created by where the function is called.
+
+```{r}
+
+f <- function(x) {
+  g(x = 2)
+}
+g <- function(x) {
+  h(x = 3)
+}
+h <- function(x) {
+  stop()
+}
+
+```
+
+```{r}
+
+# f(x = 1)
+# #> Error:
+# traceback()
+# #> 4: stop()
+# #> 3: h(x = 3) 
+# #> 2: g(x = 2)
+# #> 1: f(x = 1)
+
+```
+
+Use `lobstr::cst()` to print out the **c**all **s**tack **t**ree.
+
+```{r}
+
+h <- function(x) {
+  lobstr::cst()
+}
+f(x = 1)
+#> █
+#> └─f(x = 1)
+#>   └─g(x = 2)
+#>     └─h(x = 3)
+#>       └─lobstr::cst()
+
+```
+
+Things get more complicated with lazy evaluation.
+
+
+
+```{r}
+
+a <- function(x) b(x)
+b <- function(x) c(x)
+c <- function(x) x
+
+a(f())
+#> █
+#> ├─a(f())
+#> │ └─b(x)
+#> │   └─c(x)
+#> └─f()
+#>   └─g(x = 2)
+#>     └─h(x = 3)
+#>       └─lobstr::cst()
+
+```
+
+`c()` is evaluated in the global environment, not the function environment. This results in two branches in the call stack tree.
+
+Each element of the call stack is a **frame**, also known as an evaluation context. A frame has three key components:
+1. An expression (labelled with `expr`) giving the function call. This is what `traceback()` prints out.
+2. An environment (labelled with `env`), which is typically the execution environment of a function. There are two main exceptions: the environment of the glbal frame is the global environment, and calling `eval()` also generates frames, where the environment can be anything.
+3. A parent, the previous call in the call stack.
+
+## As data structures
+
+Section 7.6 briefly discusses three places where environments are useful data structures for solving other problems.
+
+Environment power scoping, and they are useful because they have reference semantics. Three problems they help solve:
+
+1. Avoiding copies of large data
+2. Managing state within a package
+3. As a hashmap
+
