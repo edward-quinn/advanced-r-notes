@@ -466,11 +466,11 @@ Things get more complicated with lazy evaluation.
 
 ```{r}
 
-a <- function(x) b(x)
-b <- function(x) c(x)
-c <- function(x) x
+# a <- function(x) b(x)
+# b <- function(x) c(x)
+# c <- function(x) x
 
-a(f())
+# a(f())
 #> █
 #> ├─a(f())
 #> │ └─b(x)
