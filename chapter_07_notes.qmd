@@ -3,6 +3,7 @@ title: Advanced R - Chapter 7 Notes
 format:
   html:
       toc: true
+freeze: true
 ---
 
 # 7 Environments
