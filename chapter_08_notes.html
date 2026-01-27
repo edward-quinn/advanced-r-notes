@@ -20,6 +20,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -109,7 +144,14 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#conditions" id="toc-conditions" class="nav-link active" data-scroll-target="#conditions">8 Conditions</a></li>
+  <li><a href="#conditions" id="toc-conditions" class="nav-link active" data-scroll-target="#conditions">8 Conditions</a>
+  <ul class="collapse">
+  <li><a href="#signalling-conditions" id="toc-signalling-conditions" class="nav-link" data-scroll-target="#signalling-conditions">8.2 Signalling Conditions</a></li>
+  <li><a href="#ignoring-conditions" id="toc-ignoring-conditions" class="nav-link" data-scroll-target="#ignoring-conditions">8.3 Ignoring conditions</a></li>
+  <li><a href="#handling-conditions" id="toc-handling-conditions" class="nav-link" data-scroll-target="#handling-conditions">8.4 Handling conditions</a></li>
+  <li><a href="#custom-conditions" id="toc-custom-conditions" class="nav-link" data-scroll-target="#custom-conditions">8.5 Custom conditions</a></li>
+  <li><a href="#applications" id="toc-applications" class="nav-link" data-scroll-target="#applications">8.6 Applications</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -137,8 +179,190 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="conditions" class="level1">
 <h1>8 Conditions</h1>
+<p>Authors of functions can indicate that something unusual is happening, and that the user needs to deal with it. The function author can signal conditions with functions like <code>stop()</code> for errors, <code>warning()</code> for warnings, and <code>message()</code> for messages, then the function user can handle them with functions like <code>tryCatch()</code> and <code>withCallingHandlers()</code>.</p>
+<section id="signalling-conditions" class="level2">
+<h2 class="anchored" data-anchor-id="signalling-conditions">8.2 Signalling Conditions</h2>
+<p>Section 8.2 introduces the basic tools for signalling conditions, and discusses when it is appropriate to use each type. You can signal errors, warnings, or messages.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rlang)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># stop("This is what an error looks like")</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># #&gt; Error: This is what an error looks like</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">warning</span>(<span class="st">"This is what a warning looks like"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: This is what a warning looks like</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning: This is what a warning looks like</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="st">"This is what a message looks like"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>This is what a message looks like</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; This is what a message looks like</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><strong>Errors</strong> are signaled, or thrown, by <code>stop()</code>, or by <code>rlang::abort()</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># f &lt;- function() g()</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># g &lt;- function() h()</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># h &lt;- function() stop("This is an error!")</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># f()</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># #&gt; Error in h(): This is an error!</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co"># h &lt;- function() abort("This is an error!")</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co"># f()</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co"># #&gt; Error in h(): This is an error!</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><strong>Warnings</strong> can be generated (any amount) from a single function call. <code>warning()</code> and <code>rlang::warn()</code> do the same thing with slightly different defaults.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fw <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"1</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="st">"W1"</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"2</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="st">"W2"</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"3</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="st">"W3"</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="fu">fw</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>1</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in fw(): W1</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>2</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in fw(): W2</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in fw(): W3</code></pre>
+</div>
+</div>
+<p>Warnings are appropriate to notify users of a deprecated function and when you are reasonably certain you can recover from a problem.</p>
+<p><strong>Messages</strong> are useful when: 1. When a default argument requires some non-trivial amount of computation and you want to tell the user what value was used. 2. To provide regular status updates in functions that are called for side-effects, like writing to disk. 3. When you’re about to start a long running process with no intermediate output. 4. When writing a package, and you want to display a message when your package is loaded.</p>
+</section>
+<section id="ignoring-conditions" class="level2">
+<h2 class="anchored" data-anchor-id="ignoring-conditions">8.3 Ignoring conditions</h2>
+<p>Section 8.3 teaches you about the simplest tools for handling conditions: functions like try() and suppressMessages() that swallow conditions and prevent them from getting to the top level.</p>
+<ul>
+<li>Ignore errors with <code>try()</code>.</li>
+<li>Ignore warnings with <code>suppressWarnings()</code>.</li>
+<li>Ignore messages with <code>suppressMessages()</code>.</li>
+</ul>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># f1 &lt;- function(x) {</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co">#   log(x)</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co">#   10</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co"># }</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co"># f1("x")</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co"># #&gt; Error in log(x): non-numeric argument to mathematical function</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>f2 <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">try</span>(<span class="fu">log</span>(x))</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="dv">10</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="fu">f2</span>(<span class="st">"a"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Error in log(x) : non-numeric argument to mathematical function</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 10</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error in log(x) : non-numeric argument to mathematical function</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressWarnings</span>({</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="st">"Uhoh!"</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="st">"Another warning"</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="dv">1</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>({</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"Hello there"</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="dv">2</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressWarnings</span>({</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"You can still see me"</span>)</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="dv">3</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>You can still see me</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; You can still see me</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 3</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="handling-conditions" class="level2">
+<h2 class="anchored" data-anchor-id="handling-conditions">8.4 Handling conditions</h2>
+<p>Section 8.4 introduces the condition object, and the two fundamental tools of condition handling: <code>tryCatch()</code> for error conditions, and <code>withCallingHandlers()</code> for everything else. These are the registration handlers.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># tryCatch(</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="co">#   error = function(cnd) {</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co">#     # code to run when error is thrown</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="co">#   },</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="co">#   code_to_run_while_handlers_are_active</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="co"># )</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="co"># withCallingHandlers(</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   warning = function(cnd) {</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="co">#     # code to run when warning is signalled</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="co">#   },</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a><span class="co">#   message = function(cnd) {</span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a><span class="co">#     # code to run when message is signalled</span></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="co">#   },</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a><span class="co">#   code_to_run_while_handlers_are_active</span></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a><span class="co"># )</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>tryCatch()</code> and <code>withCallingHandlers()</code> differ in the type of handlers that they create:</p>
+<p><code>tryCatch()</code> defines exiting handlers. <code>withCallingHandlers()</code> defines calling handlers. After the condition is captured control returns to the context where the condition was signalled. Suitable for non-error conditions.</p>
+<p><strong>Condition objects</strong> are created implicitly whenever you signal a condition, but become explicit inside the handler. You can catch a condition object using <code>rlang::catch_cnd()</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>cnd <span class="ot">&lt;-</span> <span class="fu">catch_cnd</span>(<span class="fu">stop</span>(<span class="st">"An error"</span>))</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(cnd)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>List of 2
+ $ message: chr "An error"
+ $ call   : language force(expr)
+ - attr(*, "class")= chr [1:3] "simpleError" "error" "condition"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; List of 2</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  $ message: chr "An error"</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  $ call   : language force(expr)</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  - attr(*, "class")= chr [1:3] "simpleError" "error" "condition"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Built-in conditions are lists with two elements: 1. <code>message</code>, a length-1 character vector containing the text to display to a user. 2. <code>call</code>, the call which triggered the condition.</p>
+<p>They also have a <code>class</code> attribute, which makes them S3 objects. This is a character vector that determines which handlers will match the condition.</p>
+</section>
+<section id="custom-conditions" class="level2">
+<h2 class="anchored" data-anchor-id="custom-conditions">8.5 Custom conditions</h2>
+<p>Section 8.5 shows you how to extend the built-in condition objects to store useful data that condition handlers can use to make more informed decisions.</p>
+</section>
+<section id="applications" class="level2">
+<h2 class="anchored" data-anchor-id="applications">8.6 Applications</h2>
+<p>Section 8.6 closes out the chapter with a grab bag of practical applications based on the low-level tools found in earlier sections.</p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

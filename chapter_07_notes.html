@@ -201,7 +201,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">env_print</span>(e1) <span class="co"># note the env in d</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>&lt;environment: 0x000002129bd3f460&gt;
+<pre><code>&lt;environment: 0x000002eb1ac5a7e0&gt;
 Parent: &lt;environment: global&gt;
 Bindings:
 • a: &lt;lgl&gt;
@@ -243,7 +243,7 @@ Bindings:
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">env_parent</span>(e2b)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>&lt;environment: 0x0000021297cbcbd8&gt;</code></pre>
+<pre><code>&lt;environment: 0x000002eb17d965f0&gt;</code></pre>
 </div>
 </div>
 <p>Only the <strong>empty environment</strong> doesn’t have a parent</p>
@@ -256,14 +256,14 @@ Bindings:
 <span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="fu">env_parents</span>(e2b)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[[1]]   &lt;env: 0x0000021297cbcbd8&gt;
+<pre><code>[[1]]   &lt;env: 0x000002eb17d965f0&gt;
 [[2]] $ &lt;env: global&gt;</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[1]]   &lt;env: 0x559735c4a248&gt;</span></span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[2]] $ &lt;env: global&gt;</span></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="fu">env_parents</span>(e2d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[[1]]   &lt;env: 0x000002129a627690&gt;
+<pre><code>[[1]]   &lt;env: 0x000002eb19536660&gt;
 [[2]] $ &lt;env: empty&gt;</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[1]]   &lt;env: 0x5597366d1bf8&gt;</span></span>
@@ -354,7 +354,7 @@ FALSE </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-   0.00    0.00    1.02 </code></pre>
+   0.00    0.00    1.01 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    user  system elapsed </span></span>
@@ -378,12 +378,12 @@ FALSE </code></pre>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>z1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.7054184</code></pre>
+<pre><code>[1] 0.3944286</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.0808</span></span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>z1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.9588259</code></pre>
+<pre><code>[1] 0.4796495</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.834</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -548,7 +548,7 @@ FALSE </code></pre>
 <span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>e <span class="ot">&lt;-</span> <span class="fu">h2</span>(<span class="at">x =</span> <span class="dv">10</span>)</span>
 <span id="cb75-7"><a href="#cb75-7" aria-hidden="true" tabindex="-1"></a><span class="fu">env_print</span>(e)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>&lt;environment: 0x000002129f03a078&gt;
+<pre><code>&lt;environment: 0x000002eb1df8fbd0&gt;
 Parent: &lt;environment: global&gt;
 Bindings:
 • a: &lt;dbl&gt;
@@ -576,7 +576,7 @@ Bindings:
 <div class="cell-output cell-output-stdout">
 <pre><code>function (y) 
 x + y
-&lt;environment: 0x000002129ccca230&gt;</code></pre>
+&lt;environment: 0x000002eb1bc9f850&gt;</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; function (y) </span></span>
 <span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; x + y</span></span>
