@@ -3,6 +3,7 @@ title: Advanced R - Chapter 8 Notes
 format:
   html:
       toc: true
+freeze: true
 ---
 
 # 8 Conditions
@@ -178,52 +179,193 @@ Built-in conditions are lists with two elements:
 
 They also have a `class` attribute, which makes them S3 objects. This is a character vector that determines which handlers will match the condition.
 
+**Exiting handlers**
+
+`tryCatch()` registers exiting handlers and is typically used to handle error conditions.
+
 ```{r}
 
+f3 <- function(x) {
+  tryCatch(
+    error = function(cnd) NA,
+    log(x)
+  )
+}
 
+f3("x")
+#> [1] NA
+
+```
+
+The handlers set up by `tryCatch()` are called **exiting handlers** because after the condition is signalled, control passes to the handler and never returns tothe original code, effectively meaning that the code exits.
+
+```{r}
+
+tryCatch(
+  message = function(cnd) "There",
+  {
+    message("Here")
+    stop("This code is never run!")
+  }
+)
+#> [1] "There"
+
+```
+
+
+```{r}
+
+tryCatch(
+  error = function(cnd) {
+    paste0("--", conditionMessage(cnd), "--")
+  },
+  stop("This is an error")
+)
+#> [1] "--This is an error--"
+
+```
+
+Use the `finally` argument in `tryCatch()` to always end a block of code with another block of code
+
+
+```{r}
+
+path <- tempfile()
+tryCatch(
+  {
+    writeLines("Hi!", path)
+    # ...
+  },
+  finally = {
+    # always run
+    unlink(path)
+  }
+)
+
+```
+
+**Calling handlers**. Use `withCallingHandlers()` to set up **calling** handlers; code execution continues normally once the handler returns.
+
+NB: there is a difference between exiting handlers handle problems by making them go away. A calling handler handles a problem like you handle a car.
+
+
+```{r}
+
+tryCatch(
+  message = function(cnd) cat("Caught a message!\n"), 
+  {
+    message("Someone there?")
+    message("Why, yes!")
+  }
+)
+#> Caught a message!
+
+withCallingHandlers(
+  message = function(cnd) cat("Caught a message!\n"), 
+  {
+    message("Someone there?")
+    message("Why, yes!")
+  }
+)
+#> Caught a message!
+#> Someone there?
+#> Caught a message!
+#> Why, yes!
 
 ```
 
 ```{r}
 
+# Bubbles all the way up to default handler which generates the message
+withCallingHandlers(
+  message = function(cnd) cat("Level 2\n"),
+  withCallingHandlers(
+    message = function(cnd) cat("Level 1\n"),
+    message("Hello")
+  )
+)
+#> Level 1
+#> Level 2
+#> Hello
 
-
-```
-
-
-```{r}
-
-
-
-```
-
-```{r}
-
-
-
-```
-
-```{r}
-
-
-
-```
-
-```{r}
-
-
+# Bubbles up to tryCatch
+tryCatch(
+  message = function(cnd) cat("Level 2\n"),
+  withCallingHandlers(
+    message = function(cnd) cat("Level 1\n"),
+    message("Hello")
+  )
+)
+#> Level 1
+#> Level 2
 
 ```
 
+You can **muffle** conditions to prevent them from "bubbling up" to parent handlers.
+
 ```{r}
 
+# Muffles the default handler which prints the messages
+withCallingHandlers(
+  message = function(cnd) {
+    cat("Level 2\n")
+    cnd_muffle(cnd)
+  },
+  withCallingHandlers(
+    message = function(cnd) cat("Level 1\n"),
+    message("Hello")
+  )
+)
+#> Level 1
+#> Level 2
 
+# Muffles level 2 handler and the default handler
+withCallingHandlers(
+  message = function(cnd) cat("Level 2\n"),
+  withCallingHandlers(
+    message = function(cnd) {
+      cat("Level 1\n")
+      cnd_muffle(cnd)
+    },
+    message("Hello")
+  )
+)
+#> Level 1
 
 ```
 
+**Call stacks** are different between exiting and calling handlers.
+
 ```{r}
 
+f <- function() g()
+g <- function() h()
+h <- function() message("!")
 
+withCallingHandlers(f(), message = function(cnd) {
+  lobstr::cst()
+  cnd_muffle(cnd)
+})
+#>      ▆
+#>   1. ├─base::withCallingHandlers(...)
+#>   2. ├─global f()
+#>   3. │ └─global g()
+#>   4. │   └─global h()
+#>   5. │     └─base::message("!")
+#>   6. │       ├─base::withRestarts(...)
+#>   7. │       │ └─base (local) withOneRestart(expr, restarts[[1L]])
+#>   8. │       │   └─base (local) doWithOneRestart(return(expr), restart)
+#>   9. │       └─base::signalCondition(cond)
+#>  10. └─global `<fn>`(`<smplMssg>`)
+#>  11.   └─lobstr::cst()
+
+tryCatch(f(), message = function(cnd) lobstr::cst())
+#>     ▆
+#>  1. └─base::tryCatch(f(), message = function(cnd) lobstr::cst())
+#>  2.   └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+#>  3.     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+#>  4.       └─value[[3L]](cond)
+#>  5.         └─lobstr::cst()
 
 ```
 
@@ -231,21 +373,151 @@ They also have a `class` attribute, which makes them S3 objects. This is a chara
 
 Section 8.5 shows you how to extend the built-in condition objects to store useful data that condition handlers can use to make more informed decisions.
 
+Here is the basic pattern:
+
 ```{r}
 
+# abort(
+#   "error_not_found",
+#   message = "Path `blah.csv` not found", 
+#   path = "blah.csv"
+# )
+# #> Error: Path `blah.csv` not found
+
+```
+
+**Motivation**. 
+
+```{r}
+
+# log(letters)
+# #> Error in log(letters): non-numeric argument to mathematical function
+# log(1:10, base = letters)
+# #> Error in log(1:10, base = letters): non-numeric argument to mathematical
+# #> function
+
+```
+
+```{r}
+
+my_log <- function(x, base = exp(1)) {
+  if (!is.numeric(x)) {
+    abort(paste0(
+      "`x` must be a numeric vector; not ", typeof(x), "."
+    ))
+  }
+  if (!is.numeric(base)) {
+    abort(paste0(
+      "`base` must be a numeric vector; not ", typeof(base), "."
+    ))
+  }
+
+  base::log(x, base = base)
+}
+
+```
+
+And now we have more useful error messages:
+
+```{r}
+
+# my_log(letters)
+# #> Error in my_log(letters): `x` must be a numeric vector; not character.
+# my_log(1:10, base = letters)
+# #> Error in my_log(1:10, base = letters): `base` must be a numeric vector; not
+# #> character.
+
+```
+
+**Signalling**
+
+```{r}
+
+abort_bad_argument <- function(arg, must, not = NULL) {
+  msg <- glue::glue("`{arg}` must {must}")
+  if (!is.null(not)) {
+    not <- typeof(not)
+    msg <- glue::glue("{msg}; not {not}.")
+  }
+  
+  abort("error_bad_argument", 
+    message = msg, 
+    arg = arg, 
+    must = must, 
+    not = not
+  )
+}
+
+# OR if you don't want a dependency on rlang
+
+stop_custom <- function(.subclass, message, call = NULL, ...) {
+  err <- structure(
+    list(
+      message = message,
+      call = call,
+      ...
+    ),
+    class = c(.subclass, "error", "condition")
+  )
+  stop(err)
+}
+
+err <- catch_cnd(
+  stop_custom("error_new", "This is a custom error", x = 10)
+)
+class(err)
+err$x
+
+```
+
+```{r}
+
+my_log <- function(x, base = exp(1)) {
+  if (!is.numeric(x)) {
+    abort_bad_argument("x", must = "be numeric", not = x)
+  }
+  if (!is.numeric(base)) {
+    abort_bad_argument("base", must = "be numeric", not = base)
+  }
+
+  base::log(x, base = base)
+}
 
 
 ```
 
 ```{r}
 
+# my_log(letters)
+# #> Error in abort_bad_argument("x", must = "be numeric", not = x): `x` must be
+# #> numeric; not character.
+# my_log(1:10, base = letters)
+# #> Error in abort_bad_argument("base", must = "be numeric", not = base): `base`
+# #> must be numeric; not character.
 
+```
+
+**Handling**. Structured condition objects are much easier to program with.
+
+```{r}
+
+library(testthat)
+
+err <- catch_cnd(my_log("a"))
+expect_s3_class(err, "error_bad_argument")
+expect_equal(err$arg, "x")
+expect_equal(err$not, "character")
 
 ```
 
 ```{r}
 
-
+tryCatch(
+  error_bad_argument = function(cnd) "bad_argument",
+  error = function(cnd) "other error",
+  my_log("a")
+)
+#> [1] "bad_argument"
 
 ```
 
@@ -253,44 +525,169 @@ Section 8.5 shows you how to extend the built-in condition objects to store usef
 
 Section 8.6 closes out the chapter with a grab bag of practical applications based on the low-level tools found in earlier sections.
 
+**Failure values** can be useful with `tryCatch()`. 
+
 ```{r}
 
+fail_with <- function(expr, value = NULL) {
+  tryCatch(
+    error = function(cnd) value,
+    expr
+  )
+}
 
+fail_with(log(10), NA_real_)
+#> [1] 2.3
+fail_with(log("x"), NA_real_)
+#> [1] NA
 
 ```
 
 
 ```{r}
 
+try2 <- function(expr, silent = FALSE) {
+  tryCatch(
+    error = function(cnd) {
+      msg <- conditionMessage(cnd)
+      if (!silent) {
+        message("Error: ", msg)
+      }
+      structure(msg, class = "try-error")
+    },
+    expr
+  )
+}
 
+try2(1)
+#> [1] 1
+try2(stop("Hi"))
+#> Error: Hi
+#> [1] "Hi"
+#> attr(,"class")
+#> [1] "try-error"
+try2(stop("Hi"), silent = TRUE)
+#> [1] "Hi"
+#> attr(,"class")
+#> [1] "try-error"
 
 ```
+
+**Success and failure values** are another use case. Return one success when the code works, and fail when it doesn't.
 
 
 ```{r}
 
+foo <- function(expr) {
+  tryCatch(
+    error = function(cnd) error_val,
+    {
+      expr
+      success_val
+    }
+  )
+}
 
+does_error <- function(expr) {
+  tryCatch(
+    error = function(cnd) TRUE,
+    {
+      expr
+      FALSE
+    }
+  )
+}
 
 ```
+
+You can also use this sort of pattern to create a `try()` variant:
 
 
 ```{r}
 
+safety <- function(expr) {
+  tryCatch(
+    error = function(cnd) {
+      list(result = NULL, error = cnd)
+    },
+    list(result = expr, error = NULL)
+  )
+}
 
+str(safety(1 + 10))
+#> List of 2
+#>  $ result: num 11
+#>  $ error : NULL
+str(safety(stop("Error!")))
+#> List of 2
+#>  $ result: NULL
+#>  $ error :List of 2
+#>   ..$ message: chr "Error!"
+#>   ..$ call   : language doTryCatch(return(expr), name, parentenv, handler)
+#>   ..- attr(*, "class")= chr [1:3] "simpleError" "error" "condition"
 
 ```
+
+**Resignal** meaning turn warnings into errors, for example.
 
 
 ```{r}
 
+warning2error <- function(expr) {
+  withCallingHandlers(
+    warning = function(cnd) abort(conditionMessage(cnd)),
+    expr
+  )
+}
 
+# warning2error({
+#   x <- 2 ^ 4
+#   warn("Hello")
+# })
+# #> Error in (function (cnd) : Hello
 
 ```
+
+**Record**. The problem is that calling handlers have side-effects, not return values. Need to modify objects in place.
 
 
 ```{r}
 
+catch_cnds <- function(expr) {
+  conds <- list()
+  add_cond <- function(cnd) {
+    conds <<- append(conds, list(cnd))
+    cnd_muffle(cnd)
+  }
+  
+  withCallingHandlers(
+    message = add_cond,
+    warning = add_cond,
+    expr
+  )
+  
+  conds
+}
 
+catch_cnds({
+  inform("a")
+  warn("b")
+  inform("c")
+})
+#> [[1]]
+#> <message/rlang_message>
+#> Message:
+#> a
+#> 
+#> [[2]]
+#> <warning/rlang_warning>
+#> Warning:
+#> b
+#> 
+#> [[3]]
+#> <message/rlang_message>
+#> Message:
+#> c
 
 ```
 
