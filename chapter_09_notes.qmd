@@ -281,262 +281,493 @@ slopes
 
 ## 9.4 Map variants
 
-Section 9.4 teaches you about 18 (!!) important variants of purrr::map(). Fortunately, their orthogonal design makes them easy to learn, remember, and master.
+Section 9.4 teaches you about 18 (!!) important variants of purrr::map(). Fortunately, their orthogonal design makes them easy to learn, remember, and master. There are five ideas to remember:
+
+1. Output same type as input with `modify()`.
+2. Iterate over two inputs with `map2()`.
+3. Iterate with an index using `imap()`.
+4. Return nothing with `walk()`.
+5. Iterate over any number of inputs with `pmap()`.
 
 
-```{r}
+**Same type of output as input: modify()**
 
-
-
-```
-
-```{r}
-
-
-
-```
+Working on a data frame, and you want to return a data frame.
 
 ```{r}
 
+df <- data.frame(
+  x = 1:3,
+  y = 6:4
+)
 
+map(df, ~ .x * 2)
+#> $x
+#> [1] 2 4 6
+#> 
+#> $y
+#> [1] 12 10  8
 
 ```
+
+`map()` returns a list, but we want to input a data frame and return a data frame. We need `modify()`.
 
 ```{r}
 
-
+modify(df, ~ .x * 2)
+#>   x  y
+#> 1 2 12
+#> 2 4 10
+#> 3 6  8
 
 ```
+
+**Two inputs: map2() and friends**
+
+Here is an example of weighted mean calculation.
 
 ```{r}
 
-
+xs <- map(1:8, ~ runif(10))
+xs[[1]][[1]] <- NA
+ws <- map(1:8, ~ rpois(10, 5) + 1)
 
 ```
+
+`map_dbl()` can handle unweighted means
 
 ```{r}
 
-
+map_dbl(xs, mean)
+#> [1]    NA 0.463 0.551 0.453 0.564 0.501 0.371 0.443
 
 ```
 
+With `map2()`, we can run vectorized operations over both `.x` and `.y`. They are both varied in each call to `.f`:
 
 ```{r}
 
-
+map2_dbl(xs, ws, weighted.mean)
+#> [1]    NA 0.451 0.603 0.452 0.563 0.510 0.342 0.464
 
 ```
+
+Additional argument besides `.x` and `.y` go after `.f`:
 
 ```{r}
 
-
+map2_dbl(xs, ws, weighted.mean, na.rm = TRUE)
+#> [1] 0.504 0.451 0.603 0.452 0.563 0.510 0.342 0.464
 
 ```
+
+A simple implementation of map shows we are iterating over two vectors at once.
 
 ```{r}
 
-
+simple_map2 <- function(x, y, f, ...) {
+  out <- vector("list", length(x))
+  for (i in seq_along(x)) {
+    out[[i]] <- f(x[[i]], y[[i]], ...)
+  }
+  out
+}
 
 ```
+
+Note that `map2()` recycles its inputs to make sure that they're the same length.
+
+**No outputs: walk() and friends**
+
+Some functions are called for their side effects, and no output in the console is desired. Examples include `ggsave()` or `write.csv()`.
 
 ```{r}
 
+welcome <- function(x) {
+  cat("Welcome ", x, "!\n", sep = "")
+}
+names <- c("Hadley", "Jenny")
 
+# As well as generate the welcomes, it also shows 
+# the return value of cat()
+map(names, welcome)
+#> Welcome Hadley!
+#> Welcome Jenny!
+#> [[1]]
+#> NULL
+#> 
+#> [[2]]
+#> NULL
 
 ```
+
+We don't really need to return the empty list here. We need `walk()`, which results in ephemeral outputs and the inputs are returned invisibly.
 
 ```{r}
 
-
+walk(names, welcome)
+#> Welcome Hadley!
+#> Welcome Jenny!
 
 ```
+
+A useful walk variant is `walk2()` because a very common side-effect is saving something to disk, and when saving something to disk you always have a pair of values; the object and the path that you want to save it to.
 
 ```{r}
 
+temp <- tempfile()
+dir.create(temp)
 
+cyls <- split(mtcars, mtcars$cyl)
+paths <- file.path(temp, paste0("cyl-", names(cyls), ".csv"))
+walk2(cyls, paths, write.csv)
+
+dir(temp)
+#> [1] "cyl-4.csv" "cyl-6.csv" "cyl-8.csv"
 
 ```
+
+
+**Iterating over values and indices**
+
+There are three basic ways to loop over a vector with a for loop:
+
+1. Loop over the elements: `for (x in xs)`
+2. Loop over the numeric indices: `for (x in seq_along(xs))`
+3. Loop over the names: `for (nm in names(xs))`
+
+Form 1 is analogous to the `map()` family. Forms 2 and 3 are analogous to `imap()`, which is like `map2()` in the sense that your `.f` gets called with two arguments, but here both are derived from the vector.
+
+`imap(x, f)` is equivalent to `map2(x, names(x), f)` if x has names, and `map2(x, seq_along(x), f)` if it does not.
+
+`imap()`is often useful for constructing labels:
 
 ```{r}
 
-
+imap_chr(iris, ~ paste0("The first value of ", .y, " is ", .x[[1]]))
+#>                             Sepal.Length 
+#> "The first value of Sepal.Length is 5.1" 
+#>                              Sepal.Width 
+#>  "The first value of Sepal.Width is 3.5" 
+#>                             Petal.Length 
+#> "The first value of Petal.Length is 1.4" 
+#>                              Petal.Width 
+#>  "The first value of Petal.Width is 0.2" 
+#>                                  Species 
+#>   "The first value of Species is setosa"
 
 ```
+
+If the vector is unnamed, the second argument will be the index:
 
 ```{r}
 
-
+x <- map(1:6, ~ sample(1000, 10))
+imap_chr(x, ~ paste0("The highest value of ", .y, " is ", max(.x)))
+#> [1] "The highest value of 1 is 975" "The highest value of 2 is 915"
+#> [3] "The highest value of 3 is 982" "The highest value of 4 is 955"
+#> [5] "The highest value of 5 is 971" "The highest value of 6 is 696"
 
 ```
+
+`imap()` is a useful helper if you want to work with the values in a vector along with their positions.
+
+**Any number of inputs: pmap() and friends**
+
+`pmap()` takes a list with any number of arguments, usually a list of equal length vectors. But you're still supplying one function.
+
+The weighted mean application above with `map2()` could be done with `pmap()`:
+
+```{r}
+
+pmap_dbl(list(xs, ws), weighted.mean)
+#> [1]    NA 0.451 0.603 0.452 0.563 0.510 0.342 0.464
+
+```
+
+As before, the varying arguments come before `.f` (although now they must be wrapped in a list), and the constant arguments come afterwards.
+
+```{r}
+
+pmap_dbl(list(xs, ws), weighted.mean, na.rm = TRUE)
+#> [1] 0.504 0.451 0.603 0.452 0.563 0.510 0.342 0.464
+
+```
+
+`pmap()` gives finer control over argument matching because you can name components of a list. See example of varying the `trim` argument to `x` using `pmap()`:
+
+```{r}
+
+trims <- c(0, 0.1, 0.2, 0.5)
+x <- rcauchy(1000)
+
+pmap_dbl(list(trim = trims), mean, x = x)
+#> [1] -6.6740  0.0210  0.0235  0.0151
+
+```
+
+`pmap()` is convenient to call with a dataframe. So...it can take a list or a dataframe as an argument? With a data frame, the column names are the arguments to the function call?
+
+```{r}
+
+params <- tibble::tribble(
+  ~ n, ~ min, ~ max,
+   1L,     0,     1,
+   2L,    10,   100,
+   3L,   100,  1000
+)
+
+pmap(params, runif)
+#> [[1]]
+#> [1] 0.332
+#> 
+#> [[2]]
+#> [1] 53.5 47.6
+#> 
+#> [[3]]
+#> [1] 231 715 515
+
+```
+
 
 ## 9.5 Reduce family
 
-Section 9.5 introduces a new style of functional: purrr::reduce(). reduce() systematically reduces a vector to a single result by applying a function that takes two inputs.
+Section 9.5 introduces a new style of functional: `purrr::reduce()`. `reduce()` systematically reduces a vector to a single result by applying a function that takes two inputs. 
 
+`reduce()` takes a vector of length n and produces a vector of length 1 by calling a function with a pair of values at a time: `reduce(1:4, f)` is equivalent to `f(f(f(1, 2), 3), 4)`.
+
+The idea is to generalize a function that works with two inputs to work with any number of inputs.
 
 ```{r}
 
+l <- map(1:4, ~ sample(1:10, 15, replace = T))
+str(l)
+#> List of 4
+#>  $ : int [1:15] 7 1 8 8 3 8 2 4 7 10 ...
+#>  $ : int [1:15] 3 1 10 2 5 2 9 8 5 4 ...
+#>  $ : int [1:15] 6 10 9 5 6 7 8 6 10 8 ...
+#>  $ : int [1:15] 9 8 6 4 4 5 2 9 9 6 ...
 
+```
+
+How to find the values that occur in every element? With base R:
+
+```{r}
+
+out <- l[[1]]
+out <- intersect(out, l[[2]])
+out <- intersect(out, l[[3]])
+out <- intersect(out, l[[4]])
+out
+#> [1] 8 4
+
+```
+
+automate this with `reduce()`
+
+```{r}
+
+reduce(l, intersect)
+#> [1] 8 4
+
+```
+
+We can also pass `union()` to see which elements appear in at least one entry:
+
+```{r}
+
+reduce(l, union)
+
+```
+
+See the underlying logic in `reduce()`
+
+```{r}
+
+simple_reduce <- function(x, f) {
+  out <- x[[1]]
+  for (i in seq(2, length(x))) {
+    out <- f(out, x[[i]])
+  }
+  out
+}
+
+```
+
+**Accumulate**. `accumulate()` returns all the intermediate results of `reduce()`.
+
+```{r}
+
+accumulate(l, intersect)
+#> [[1]]
+#>  [1]  7  1  8  8  3  8  2  4  7 10 10  3  7 10 10
+#> 
+#> [[2]]
+#> [1]  1  8  3  2  4 10
+#> 
+#> [[3]]
+#> [1]  8  4 10
+#> 
+#> [[4]]
+#> [1] 8 4
 
 ```
 
 ```{r}
 
+x <- c(4, 3, 10)
+reduce(x, `+`)
+#> [1] 17
 
-
-```
-
-```{r}
-
-
-
-```
-
-```{r}
-
-
+accumulate(x, `+`)
+#> [1]  4  7 17
 
 ```
 
-```{r}
+Combining `map()` and `reduce()` is a powerful combination.
 
+**Multiple Inputs** are possible with `reduce2()`.
 
-
-```
-
-```{r}
-
-
-
-```
-
-```{r}
-
-
-
-```
-
-```{r}
-
-
-
-```
 
 ## 9.6 Predicate functionals
 
 Section 9.6 teaches you about predicates: functions that return a single TRUE or FALSE, and the family of functionals that use them to solve common problems.
 
+purrr provides seven useful functions which come in three groups:
+
+`some(.x, .p)` returns TRUE if any element matches;
+`every(.x, .p)` returns TRUE if all elements match;
+`none(.x, .p)` returns TRUE if no element matches.
+
+These are similar to `any(map_lgl(.x, .p))`, `all(map_lgl(.x, .p))` and `all(map_lgl(.x, negate(.p)))` but they terminate early: `some()` returns TRUE when it sees the first TRUE, and `every()` and `none()` return FALSE when they see the first FALSE or TRUE respectively.
+
+`detect(.x, .p)` returns the value of the first match; `detect_index(.x, .p)` returns the location of the first match.
+
+`keep(.x, .p)` keeps all matching elements; `discard(.x, .p)` drops all matching elements.
+
 
 ```{r}
 
+df <- data.frame(x = 1:3, y = c("a", "b", "c"))
+detect(df, is.factor)
+#> NULL
+detect_index(df, is.factor)
+#> [1] 0
 
+str(keep(df, is.factor))
+#> 'data.frame':    3 obs. of  0 variables
+str(discard(df, is.factor))
+#> 'data.frame':    3 obs. of  2 variables:
+#>  $ x: int  1 2 3
+#>  $ y: chr  "a" "b" "c"
 
 ```
+
+`map()` and `modify()` come in variants that also take predicate functions, transforming only the lements of `.x` where `.p` is `TRUE`.
+
+
 
 ```{r}
 
+df <- data.frame(
+  num1 = c(0, 10, 20),
+  num2 = c(5, 6, 7),
+  chr1 = c("a", "b", "c"),
+  stringsAsFactors = FALSE
+)
 
-
-```
-
-```{r}
-
-
-
-```
-
-```{r}
-
-
-
-```
-
-```{r}
-
-
-
-```
-
-```{r}
-
-
+str(map_if(df, is.numeric, mean))
+#> List of 3
+#>  $ num1: num 10
+#>  $ num2: num 6
+#>  $ chr1: chr [1:3] "a" "b" "c"
+str(modify_if(df, is.numeric, mean))
+#> 'data.frame':    3 obs. of  3 variables:
+#>  $ num1: num  10 10 10
+#>  $ num2: num  6 6 6
+#>  $ chr1: chr  "a" "b" "c"
+str(map(keep(df, is.numeric), mean))
+#> List of 2
+#>  $ num1: num 10
+#>  $ num2: num 6
 
 ```
 
-```{r}
-
-
-
-```
-
-```{r}
-
-
-
-```
 
 ## 9.7 Base functionals
 
 Section 9.7 reviews some functionals in base R that are not members of the map, reduce, or predicate families.
 
+If you are working with two-dimensional and higher vectors, use `base::apply()`.
 
+
+Arguments to `apply()`:
+
+X, the matrix or array to summarise.
+
+MARGIN, an integer vector giving the dimensions to summarise over, 1 = rows, 2 = columns, etc. (The argument name comes from thinking about the margins of a joint distribution.)
+
+FUN, a summary function.
+
+... other arguments passed on to FUN.
 
 ```{r}
 
-
+a2d <- matrix(1:20, nrow = 5)
+apply(a2d, 1, mean)
+#> [1]  8.5  9.5 10.5 11.5 12.5
+apply(a2d, 2, mean)
+#> [1]  3  8 13 18
 
 ```
 
 ```{r}
 
-
-
-```
-
-```{r}
-
-
-
-```
-
-```{r}
-
-
+a3d <- array(1:24, c(2, 3, 4))
+apply(a3d, 1, mean)
+#> [1] 12 13
+apply(a3d, c(1, 2), mean)
+#>      [,1] [,2] [,3]
+#> [1,]   10   12   14
+#> [2,]   11   13   15
 
 ```
 
+Don't use `apply()` with a dataframe:
+
 ```{r}
 
-
+# df <- data.frame(x = 1:3, y = c("a", "b", "c"))
+# apply(df, 2, mean)
+# #> Warning in mean.default(newX[, i], ...): argument is not numeric or logical:
+# #> returning NA
+# #> Warning in mean.default(newX[, i], ...): argument is not numeric or logical:
+# #> returning NA
+# #>  x  y 
+# #> NA NA
 
 ```
 
-```{r}
-
-
-
-```
+**Mathematical concerns**.
 
 ```{r}
 
-
-
-```
-
-```{r}
-
-
-
-```
-
-```{r}
-
-
-
-```
-
-```{r}
-
-
+integrate(sin, 0, pi)
+#> 2 with absolute error < 2.2e-14
+str(uniroot(sin, pi * c(1 / 2, 3 / 2)))
+#> List of 5
+#>  $ root      : num 3.14
+#>  $ f.root    : num 1.22e-16
+#>  $ iter      : int 2
+#>  $ init.it   : int NA
+#>  $ estim.prec: num 6.1e-05
+str(optimise(sin, c(0, 2 * pi)))
+#> List of 2
+#>  $ minimum  : num 4.71
+#>  $ objective: num -1
+str(optimise(sin, c(0, pi), maximum = TRUE))
+#> List of 2
+#>  $ maximum  : num 1.57
+#>  $ objective: num 1
 
 ```
